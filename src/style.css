@@ -151,11 +151,11 @@ html, body {
   color: var(--text-muted);
 }
 
-/* ---- Controls Panel (Left Side) ---- */
+/* ---- Controls Panel (Right Side) ---- */
 .controls {
   position: absolute;
   top: 16px;
-  left: 16px;
+  right: 16px;
   width: 300px;
   background: rgba(15, 21, 32, 0.92);
   backdrop-filter: blur(12px);
@@ -503,11 +503,11 @@ html, body {
   line-height: 1.6;
 }
 
-/* ---- Info Panel (Right Side) ---- */
+/* ---- Info Panel (Left Side) ---- */
 .info-panel {
   position: absolute;
   top: 16px;
-  right: 16px;
+  left: 16px;
   width: 360px;
   max-height: calc(100vh - 32px);
   background: rgba(15, 21, 32, 0.95);
@@ -531,7 +531,7 @@ html, body {
 }
 
 .info-panel.hidden {
-  transform: translateX(20px);
+  transform: translateX(-20px);
   opacity: 0;
   pointer-events: none;
 }

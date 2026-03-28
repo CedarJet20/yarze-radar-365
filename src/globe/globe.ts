@@ -1,6 +1,6 @@
 // ============================================================
 // Globe Renderer — globe.gl + Three.js
-// Uses objectsData with Three.js Sprites for jitter-free rendering
+// Uses customLayerData with rotated meshes for heading-aware icons
 // ============================================================
 
 import Globe from 'globe.gl';
@@ -50,17 +50,15 @@ function getVehicleId(v: Vehicle): string {
 }
 
 // ============================================================
-// Canvas texture generation for vehicle sprites
+// Canvas texture generation — heading is baked into the texture
 // ============================================================
 
-const textureCache = new Map<string, THREE.CanvasTexture>();
-
-function getVehicleTexture(type: 'aircraft' | 'vessel', color: string): THREE.CanvasTexture {
-  const key = `${type}-${color}`;
-  let tex = textureCache.get(key);
-  if (tex) return tex;
-
-  const size = 64;
+function createRotatedTexture(
+  type: 'aircraft' | 'vessel',
+  color: string,
+  headingDeg: number
+): THREE.CanvasTexture {
+  const size = 128;
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
@@ -68,66 +66,88 @@ function getVehicleTexture(type: 'aircraft' | 'vessel', color: string): THREE.Ca
 
   ctx.clearRect(0, 0, size, size);
 
+  // Rotate the canvas to bake heading into the texture
+  // Icons are drawn pointing UP (north = 0°), heading is clockwise from north
+  ctx.save();
+  ctx.translate(size / 2, size / 2);
+  ctx.rotate((headingDeg * Math.PI) / 180);
+  ctx.translate(-size / 2, -size / 2);
+
   if (type === 'aircraft') {
     drawAircraftIcon(ctx, size, color);
   } else {
     drawVesselIcon(ctx, size, color);
   }
 
-  tex = new THREE.CanvasTexture(canvas);
+  ctx.restore();
+
+  // Draw label area (not rotated) — small dot at center bottom for reference
+  const tex = new THREE.CanvasTexture(canvas);
   tex.needsUpdate = true;
-  textureCache.set(key, tex);
   return tex;
 }
 
 function drawAircraftIcon(ctx: CanvasRenderingContext2D, size: number, color: string) {
   const cx = size / 2;
   const cy = size / 2;
-  const s = size * 0.38;
+  const s = size * 0.35;
 
   // Glow
   ctx.shadowColor = color;
-  ctx.shadowBlur = 10;
+  ctx.shadowBlur = 12;
 
   ctx.fillStyle = color;
   ctx.beginPath();
   // Aircraft silhouette pointing UP (nose at top)
   ctx.moveTo(cx, cy - s);                     // nose
   ctx.lineTo(cx + s * 0.12, cy - s * 0.6);    // right fuselage
-  ctx.lineTo(cx + s * 0.75, cy + s * 0.15);   // right wing tip
-  ctx.lineTo(cx + s * 0.7, cy + s * 0.25);    // right wing trailing edge
+  ctx.lineTo(cx + s * 0.8, cy + s * 0.1);     // right wing tip
+  ctx.lineTo(cx + s * 0.75, cy + s * 0.22);   // right wing trailing edge
   ctx.lineTo(cx + s * 0.12, cy + s * 0.05);   // right wing root
-  ctx.lineTo(cx + s * 0.12, cy + s * 0.45);   // right fuselage aft
-  ctx.lineTo(cx + s * 0.4, cy + s * 0.7);     // right stabilizer tip
-  ctx.lineTo(cx + s * 0.35, cy + s * 0.8);    // right stabilizer trailing
-  ctx.lineTo(cx, cy + s * 0.6);               // tail center
+  ctx.lineTo(cx + s * 0.12, cy + s * 0.5);    // right fuselage aft
+  ctx.lineTo(cx + s * 0.4, cy + s * 0.72);    // right stabilizer tip
+  ctx.lineTo(cx + s * 0.35, cy + s * 0.82);   // right stabilizer trailing
+  ctx.lineTo(cx, cy + s * 0.65);              // tail center
   // Mirror left side
-  ctx.lineTo(cx - s * 0.35, cy + s * 0.8);
-  ctx.lineTo(cx - s * 0.4, cy + s * 0.7);
-  ctx.lineTo(cx - s * 0.12, cy + s * 0.45);
+  ctx.lineTo(cx - s * 0.35, cy + s * 0.82);
+  ctx.lineTo(cx - s * 0.4, cy + s * 0.72);
+  ctx.lineTo(cx - s * 0.12, cy + s * 0.5);
   ctx.lineTo(cx - s * 0.12, cy + s * 0.05);
-  ctx.lineTo(cx - s * 0.7, cy + s * 0.25);
-  ctx.lineTo(cx - s * 0.75, cy + s * 0.15);
+  ctx.lineTo(cx - s * 0.75, cy + s * 0.22);
+  ctx.lineTo(cx - s * 0.8, cy + s * 0.1);
   ctx.lineTo(cx - s * 0.12, cy - s * 0.6);
   ctx.closePath();
   ctx.fill();
 
-  // Cockpit highlight
+  // Engine nacelles for larger aircraft
   ctx.shadowBlur = 0;
-  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.fillStyle = color;
+  ctx.globalAlpha = 0.7;
+  // Left engine
   ctx.beginPath();
-  ctx.ellipse(cx, cy - s * 0.75, s * 0.08, s * 0.12, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx - s * 0.38, cy + s * 0.08, s * 0.06, s * 0.14, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Right engine
+  ctx.beginPath();
+  ctx.ellipse(cx + s * 0.38, cy + s * 0.08, s * 0.06, s * 0.14, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Cockpit highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - s * 0.78, s * 0.07, s * 0.12, 0, 0, Math.PI * 2);
   ctx.fill();
 }
 
 function drawVesselIcon(ctx: CanvasRenderingContext2D, size: number, color: string) {
   const cx = size / 2;
   const cy = size / 2;
-  const s = size * 0.35;
+  const s = size * 0.32;
 
   // Glow
   ctx.shadowColor = color;
-  ctx.shadowBlur = 8;
+  ctx.shadowBlur = 10;
 
   ctx.fillStyle = color;
   ctx.beginPath();
@@ -145,12 +165,12 @@ function drawVesselIcon(ctx: CanvasRenderingContext2D, size: number, color: stri
 
   // Bridge
   ctx.shadowBlur = 0;
-  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
   ctx.fillRect(cx - s * 0.15, cy + s * 0.15, s * 0.3, s * 0.25);
 }
 
 // ============================================================
-// Datum type for objectsData layer
+// Datum type for customLayerData
 // ============================================================
 
 interface VehicleDatum {
@@ -162,6 +182,22 @@ interface VehicleDatum {
   color: string;
   heading: number;
   label: string;
+}
+
+// Globe radius used by globe.gl
+const GLOBE_RADIUS = 100;
+const DEG2RAD = Math.PI / 180;
+
+// Convert lat/lng/alt to 3D cartesian coordinates on the globe
+function latLngToVector3(lat: number, lng: number, alt: number): THREE.Vector3 {
+  const phi = (90 - lat) * DEG2RAD;
+  const theta = (90 + lng) * DEG2RAD;
+  const r = GLOBE_RADIUS * (1 + alt);
+  return new THREE.Vector3(
+    r * Math.sin(phi) * Math.cos(theta),
+    r * Math.cos(phi),
+    r * Math.sin(phi) * Math.sin(theta)
+  );
 }
 
 // ============================================================
@@ -185,47 +221,60 @@ export function createGlobe(
     .showAtmosphere(true)
     .atmosphereColor('#4da6ff')
     .atmosphereAltitude(0.2)
-    // Objects layer for vehicle sprites (WebGL-native, no jitter)
-    .objectsData([])
-    .objectLat((d: any) => (d as VehicleDatum).lat)
-    .objectLng((d: any) => (d as VehicleDatum).lng)
-    .objectAltitude((d: any) => (d as VehicleDatum).alt)
-    .objectFacesSurface(false as any) // billboard mode - always face camera
-    .objectRotation((d: any) => {
-      // Rotate around Z axis so arrow points in heading direction
-      // Icons are drawn pointing up (0°), heading is clockwise from north
+    // Custom layer for vehicle meshes (WebGL-native, supports rotation)
+    .customLayerData([])
+    .customThreeObject((d: any) => {
       const datum = d as VehicleDatum;
-      return { x: 0, y: 0, z: -datum.heading };
-    })
-    .objectThreeObject((d: any) => {
-      const datum = d as VehicleDatum;
-      const texture = getVehicleTexture(datum.vehicle.type, datum.color);
+      const texture = createRotatedTexture(
+        datum.vehicle.type,
+        datum.color,
+        datum.heading
+      );
       const material = new THREE.SpriteMaterial({
         map: texture,
         transparent: true,
         depthWrite: false,
-        sizeAttenuation: true,
       });
       const sprite = new THREE.Sprite(material);
-      sprite.scale.set(2.5, 2.5, 1);
-      // Store vehicle data for click identification
-      sprite.userData = { vehicleDatum: datum };
+      sprite.scale.set(3.5, 3.5, 1);
+      sprite.userData = datum;
       return sprite;
     })
-    .objectLabel((d: any) => {
+    .customThreeObjectUpdate((obj: any, d: any) => {
+      const datum = d as VehicleDatum;
+      const sprite = obj as THREE.Sprite;
+
+      // Update position
+      const pos = latLngToVector3(datum.lat, datum.lng, datum.alt);
+      sprite.position.set(pos.x, pos.y, pos.z);
+
+      // Re-create texture if heading changed
+      const oldDatum = sprite.userData as VehicleDatum;
+      if (Math.abs(oldDatum.heading - datum.heading) > 1 || oldDatum.color !== datum.color) {
+        const texture = createRotatedTexture(
+          datum.vehicle.type,
+          datum.color,
+          datum.heading
+        );
+        (sprite.material as THREE.SpriteMaterial).map = texture;
+        (sprite.material as THREE.SpriteMaterial).needsUpdate = true;
+      }
+      sprite.userData = datum;
+    })
+    .customLayerLabel((d: any) => {
       const datum = d as VehicleDatum;
       const v = datum.vehicle;
       if (v.type === 'aircraft') {
         return `<div class="globe-tooltip">
           <b>${datum.label}</b><br/>
           ${v.airlineName || v.originCountry}<br/>
-          ${v.altitudeFeet.toLocaleString()} ft · ${v.speedKnots} kts
+          ${v.altitudeFeet.toLocaleString()} ft &middot; ${v.speedKnots} kts
         </div>`;
       }
       return `<div class="globe-tooltip">
         <b>${datum.label}</b><br/>
-        ${v.flag} · ${v.vesselType}<br/>
-        ${v.speed} kts → ${v.destination}
+        ${v.flag} &middot; ${v.vesselType}<br/>
+        ${v.speed.toFixed(1)} kts &rarr; ${v.destination}
       </div>`;
     })
     // Paths layer for trajectories
@@ -251,8 +300,8 @@ export function createGlobe(
     .arcDashGap(0.2)
     .arcDashAnimateTime(2000);
 
-  // Click handler for vehicle objects
-  globe.onObjectClick((obj: any) => {
+  // Click handler for custom layer objects
+  globe.onCustomLayerClick((obj: any) => {
     const datum = obj as VehicleDatum;
     if (datum.vehicle) {
       onVehicleClick(datum.vehicle);
@@ -323,7 +372,7 @@ export function createGlobe(
       label: getVehicleLabel(v),
     }));
 
-    globe.objectsData(data);
+    globe.customLayerData(data);
   }
 
   function showTrajectory(vehicle: Vehicle | null) {
