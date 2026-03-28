@@ -664,38 +664,25 @@ html, body {
   color: var(--text-muted);
 }
 
-/* ---- Vehicle Icons on Globe ---- */
-.vehicle-icon {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transition: transform 0.8s ease;
-}
-
-.vehicle-icon svg {
-  display: block;
-}
-
-.vehicle-icon:hover {
-  z-index: 100;
-}
-
-.vehicle-icon:hover svg {
-  filter: brightness(1.5) drop-shadow(0 0 8px currentColor) !important;
-}
-
-.vehicle-label {
-  position: absolute;
-  top: 100%;
-  margin-top: 2px;
+/* ---- Globe Tooltips ---- */
+.globe-tooltip {
   font-family: var(--font-mono);
-  font-size: 8px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: rgba(15, 21, 32, 0.95);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  padding: 6px 10px;
   white-space: nowrap;
-  text-shadow: 0 0 4px rgba(0,0,0,0.8), 0 1px 2px rgba(0,0,0,0.9);
   pointer-events: none;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.globe-tooltip b {
+  color: var(--accent-blue);
+  font-size: 12px;
 }
 
 /* ---- Panel Icon SVG ---- */

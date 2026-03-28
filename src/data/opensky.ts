@@ -462,15 +462,19 @@ function calculateProgress(
   return Math.max(0, Math.min(1, flown / totalDist));
 }
 
+// Reference epoch for deterministic movement (start of the hour)
+const MOVEMENT_EPOCH = Math.floor(Date.now() / 3_600_000) * 3600;
+
 function generateFallbackAircraft(): Aircraft[] {
   const now = Math.floor(Date.now() / 1000);
+  const elapsedSec = now - MOVEMENT_EPOCH;
 
   return ROUTES.map((r, i) => {
-    // Slight position jitter so map does not look perfectly static
-    const jitterLat = (Math.random() - 0.5) * 2;
-    const jitterLng = (Math.random() - 0.5) * 2;
-    const lat = r.lat + jitterLat;
-    const lng = r.lng + jitterLng;
+    // Move along heading based on elapsed time (deterministic, no teleporting)
+    const trackRad = (r.track * Math.PI) / 180;
+    const distDeg = (r.vel * elapsedSec) / 111320; // m/s × seconds / m-per-degree
+    const lat = r.lat + Math.cos(trackRad) * distDeg;
+    const lng = r.lng + Math.sin(trackRad) * distDeg / Math.cos((r.lat * Math.PI) / 180);
 
     const depAirport = AIRPORTS[r.depICAO] ?? null;
     const arrAirport = AIRPORTS[r.arrICAO] ?? null;

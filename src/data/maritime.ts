@@ -661,15 +661,20 @@ function generateTrajectory(
   return positions;
 }
 
+// Reference epoch for deterministic vessel movement
+const VESSEL_EPOCH = Math.floor(Date.now() / 3_600_000) * 3600;
+
 export function fetchAllVessels(): Vessel[] {
   const now = Math.floor(Date.now() / 1000);
+  const elapsedSec = now - VESSEL_EPOCH;
 
   return VESSEL_TEMPLATES.map((t) => {
-    // Slight positional jitter for realism
-    const jitterLat = (Math.random() - 0.5) * 0.5;
-    const jitterLng = (Math.random() - 0.5) * 0.5;
-    const lat = t.lat + jitterLat;
-    const lng = t.lng + jitterLng;
+    // Move along course based on elapsed time (knots → m/s → degrees)
+    const courseRad = (t.course * Math.PI) / 180;
+    const speedMs = t.speed * 0.51444; // knots to m/s
+    const distDeg = (speedMs * elapsedSec) / 111320;
+    const lat = t.lat + Math.cos(courseRad) * distDeg;
+    const lng = t.lng + Math.sin(courseRad) * distDeg / Math.cos((t.lat * Math.PI) / 180);
 
     const depPort: Port | null = t.departurePortKey ? (PORTS[t.departurePortKey] ?? null) : null;
     const arrPort: Port | null = t.arrivalPortKey ? (PORTS[t.arrivalPortKey] ?? null) : null;

@@ -1,13 +1,12 @@
 // ============================================================
 // Globe Renderer — globe.gl + Three.js
-// Same world physics as worldmonitor.app
+// Uses objectsData with Three.js Sprites for jitter-free rendering
 // ============================================================
 
 import Globe from 'globe.gl';
 import type { GlobeInstance } from 'globe.gl';
 import * as THREE from 'three';
 import type { Vehicle, FilterState } from '../types';
-import { createVehicleElement } from '../ui/icons';
 
 // Colors by vehicle type
 const AIRCRAFT_COLORS: Record<string, string> = {
@@ -50,17 +49,124 @@ function getVehicleId(v: Vehicle): string {
   return v.type === 'aircraft' ? v.icao24 : v.mmsi;
 }
 
-interface HtmlDatum {
+// ============================================================
+// Canvas texture generation for vehicle sprites
+// ============================================================
+
+const textureCache = new Map<string, THREE.CanvasTexture>();
+
+function getVehicleTexture(type: 'aircraft' | 'vessel', color: string): THREE.CanvasTexture {
+  const key = `${type}-${color}`;
+  let tex = textureCache.get(key);
+  if (tex) return tex;
+
+  const size = 64;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+
+  ctx.clearRect(0, 0, size, size);
+
+  if (type === 'aircraft') {
+    drawAircraftIcon(ctx, size, color);
+  } else {
+    drawVesselIcon(ctx, size, color);
+  }
+
+  tex = new THREE.CanvasTexture(canvas);
+  tex.needsUpdate = true;
+  textureCache.set(key, tex);
+  return tex;
+}
+
+function drawAircraftIcon(ctx: CanvasRenderingContext2D, size: number, color: string) {
+  const cx = size / 2;
+  const cy = size / 2;
+  const s = size * 0.38;
+
+  // Glow
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 10;
+
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  // Aircraft silhouette pointing UP (nose at top)
+  ctx.moveTo(cx, cy - s);                     // nose
+  ctx.lineTo(cx + s * 0.12, cy - s * 0.6);    // right fuselage
+  ctx.lineTo(cx + s * 0.75, cy + s * 0.15);   // right wing tip
+  ctx.lineTo(cx + s * 0.7, cy + s * 0.25);    // right wing trailing edge
+  ctx.lineTo(cx + s * 0.12, cy + s * 0.05);   // right wing root
+  ctx.lineTo(cx + s * 0.12, cy + s * 0.45);   // right fuselage aft
+  ctx.lineTo(cx + s * 0.4, cy + s * 0.7);     // right stabilizer tip
+  ctx.lineTo(cx + s * 0.35, cy + s * 0.8);    // right stabilizer trailing
+  ctx.lineTo(cx, cy + s * 0.6);               // tail center
+  // Mirror left side
+  ctx.lineTo(cx - s * 0.35, cy + s * 0.8);
+  ctx.lineTo(cx - s * 0.4, cy + s * 0.7);
+  ctx.lineTo(cx - s * 0.12, cy + s * 0.45);
+  ctx.lineTo(cx - s * 0.12, cy + s * 0.05);
+  ctx.lineTo(cx - s * 0.7, cy + s * 0.25);
+  ctx.lineTo(cx - s * 0.75, cy + s * 0.15);
+  ctx.lineTo(cx - s * 0.12, cy - s * 0.6);
+  ctx.closePath();
+  ctx.fill();
+
+  // Cockpit highlight
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - s * 0.75, s * 0.08, s * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawVesselIcon(ctx: CanvasRenderingContext2D, size: number, color: string) {
+  const cx = size / 2;
+  const cy = size / 2;
+  const s = size * 0.35;
+
+  // Glow
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 8;
+
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  // Ship hull pointing UP (bow at top)
+  ctx.moveTo(cx, cy - s);                      // bow point
+  ctx.lineTo(cx + s * 0.35, cy - s * 0.4);     // right bow
+  ctx.lineTo(cx + s * 0.35, cy + s * 0.5);     // right hull
+  ctx.lineTo(cx + s * 0.25, cy + s * 0.75);    // right stern
+  ctx.lineTo(cx, cy + s * 0.85);               // stern center
+  ctx.lineTo(cx - s * 0.25, cy + s * 0.75);    // left stern
+  ctx.lineTo(cx - s * 0.35, cy + s * 0.5);     // left hull
+  ctx.lineTo(cx - s * 0.35, cy - s * 0.4);     // left bow
+  ctx.closePath();
+  ctx.fill();
+
+  // Bridge
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.fillRect(cx - s * 0.15, cy + s * 0.15, s * 0.3, s * 0.25);
+}
+
+// ============================================================
+// Datum type for objectsData layer
+// ============================================================
+
+interface VehicleDatum {
   id: string;
   lat: number;
   lng: number;
   alt: number;
   vehicle: Vehicle;
   color: string;
+  heading: number;
+  label: string;
 }
 
-// Cache for HTML elements to avoid re-creating on every update
-const elementCache = new Map<string, HTMLDivElement>();
+// ============================================================
+// Globe creation
+// ============================================================
 
 export function createGlobe(
   container: HTMLElement,
@@ -79,44 +185,49 @@ export function createGlobe(
     .showAtmosphere(true)
     .atmosphereColor('#4da6ff')
     .atmosphereAltitude(0.2)
-    // HTML elements layer for vehicle icons
-    .htmlElementsData([])
-    .htmlLat((d: any) => d.lat)
-    .htmlLng((d: any) => d.lng)
-    .htmlAltitude((d: any) => d.alt)
-    .htmlElement((d: any) => {
-      const datum = d as HtmlDatum;
-      const v = datum.vehicle;
-      const id = datum.id;
-      const color = datum.color;
-
-      // Re-use cached element if exists, update rotation
-      let el = elementCache.get(id);
-      if (el) {
-        const heading = v.type === 'aircraft' ? v.heading : v.heading;
-        el.style.transform = `rotate(${heading}deg)`;
-        const labelEl = el.querySelector('.vehicle-label') as HTMLElement;
-        if (labelEl) labelEl.style.transform = `rotate(${-heading}deg)`;
-        return el;
-      }
-
-      // Create new element
-      const heading = v.type === 'aircraft' ? v.heading : v.heading;
-      const subtype = v.type === 'aircraft' ? v.aircraftSize : v.vesselType;
-      const engines = v.type === 'aircraft' ? v.engineCount : 0;
-      const label = getVehicleLabel(v);
-
-      el = createVehicleElement(v.type, subtype, engines, color, heading, label);
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        onVehicleClick(v);
-      });
-      el.style.cursor = 'pointer';
-
-      elementCache.set(id, el);
-      return el;
+    // Objects layer for vehicle sprites (WebGL-native, no jitter)
+    .objectsData([])
+    .objectLat((d: any) => (d as VehicleDatum).lat)
+    .objectLng((d: any) => (d as VehicleDatum).lng)
+    .objectAltitude((d: any) => (d as VehicleDatum).alt)
+    .objectFacesSurface(false as any) // billboard mode - always face camera
+    .objectRotation((d: any) => {
+      // Rotate around Z axis so arrow points in heading direction
+      // Icons are drawn pointing up (0°), heading is clockwise from north
+      const datum = d as VehicleDatum;
+      return { x: 0, y: 0, z: -datum.heading };
     })
-    .htmlTransitionDuration(800)
+    .objectThreeObject((d: any) => {
+      const datum = d as VehicleDatum;
+      const texture = getVehicleTexture(datum.vehicle.type, datum.color);
+      const material = new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        depthWrite: false,
+        sizeAttenuation: true,
+      });
+      const sprite = new THREE.Sprite(material);
+      sprite.scale.set(2.5, 2.5, 1);
+      // Store vehicle data for click identification
+      sprite.userData = { vehicleDatum: datum };
+      return sprite;
+    })
+    .objectLabel((d: any) => {
+      const datum = d as VehicleDatum;
+      const v = datum.vehicle;
+      if (v.type === 'aircraft') {
+        return `<div class="globe-tooltip">
+          <b>${datum.label}</b><br/>
+          ${v.airlineName || v.originCountry}<br/>
+          ${v.altitudeFeet.toLocaleString()} ft · ${v.speedKnots} kts
+        </div>`;
+      }
+      return `<div class="globe-tooltip">
+        <b>${datum.label}</b><br/>
+        ${v.flag} · ${v.vesselType}<br/>
+        ${v.speed} kts → ${v.destination}
+      </div>`;
+    })
     // Paths layer for trajectories
     .pathsData([])
     .pathPoints('coords')
@@ -139,6 +250,14 @@ export function createGlobe(
     .arcDashLength(0.4)
     .arcDashGap(0.2)
     .arcDashAnimateTime(2000);
+
+  // Click handler for vehicle objects
+  globe.onObjectClick((obj: any) => {
+    const datum = obj as VehicleDatum;
+    if (datum.vehicle) {
+      onVehicleClick(datum.vehicle);
+    }
+  });
 
   // Add ambient light
   const scene = globe.scene();
@@ -193,22 +312,18 @@ export function createGlobe(
       return true;
     });
 
-    // Clear stale cache entries
-    const activeIds = new Set(filtered.map(v => getVehicleId(v)));
-    for (const [id] of elementCache) {
-      if (!activeIds.has(id)) elementCache.delete(id);
-    }
-
-    const htmlData: HtmlDatum[] = filtered.map(v => ({
+    const data: VehicleDatum[] = filtered.map(v => ({
       id: getVehicleId(v),
       lat: v.latitude,
       lng: v.longitude,
       alt: getVehicleAlt(v),
       vehicle: v,
       color: getVehicleColor(v),
+      heading: v.heading,
+      label: getVehicleLabel(v),
     }));
 
-    globe.htmlElementsData(htmlData);
+    globe.objectsData(data);
   }
 
   function showTrajectory(vehicle: Vehicle | null) {
@@ -224,8 +339,7 @@ export function createGlobe(
     globe.pathsData([{ coords: pathCoords }]);
 
     // Future heading prediction
-    const heading = vehicle.type === 'aircraft' ? vehicle.heading : vehicle.heading;
-    const headingRad = (heading * Math.PI) / 180;
+    const headingRad = (vehicle.heading * Math.PI) / 180;
     const distance = vehicle.type === 'aircraft' ? 3 : 1.5;
     const endLat = vehicle.latitude + Math.cos(headingRad) * distance;
     const endLng = vehicle.longitude + Math.sin(headingRad) * distance;
