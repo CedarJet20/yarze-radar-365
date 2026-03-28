@@ -2,6 +2,9 @@
 // Yarze Radar 365 — Type Definitions
 // ============================================================
 
+import type { AircraftSize } from './data/aircraft-db';
+import type { Airport, Port } from './data/airports';
+
 export type VehicleCategory = 'commercial' | 'private' | 'military' | 'cargo' | 'helicopter';
 export type VesselCategory = 'cargo' | 'tanker' | 'passenger' | 'fishing' | 'military' | 'sailing' | 'tug';
 export type TrafficType = 'aircraft' | 'vessel';
@@ -35,6 +38,18 @@ export interface Aircraft {
   heading: number;
   speedKnots: number;
   altitudeFeet: number;
+  // Extended info
+  airlineName: string;
+  tailNumber: string;
+  aircraftModel: string;
+  aircraftManufacturer: string;
+  aircraftSize: AircraftSize;
+  engineCount: number;
+  departureAirport: Airport | null;
+  arrivalAirport: Airport | null;
+  departureTime: number | null; // unix
+  etaTime: number | null; // unix
+  progress: number; // 0-1 flight progress
 }
 
 export interface Vessel {
@@ -58,6 +73,10 @@ export interface Vessel {
   status: string; // navigational status
   lastUpdate: number;
   trajectory: Position[];
+  // Extended
+  departurePort: Port | null;
+  arrivalPort: Port | null;
+  progress: number; // 0-1 voyage progress
 }
 
 export type Vehicle = Aircraft | Vessel;

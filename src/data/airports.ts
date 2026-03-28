@@ -1,0 +1,215 @@
+// ============================================================
+// Airport & Port Database
+// ============================================================
+
+export interface Airport {
+  icao: string;
+  iata: string;
+  name: string;
+  city: string;
+  country: string;
+  lat: number;
+  lng: number;
+}
+
+export interface Port {
+  name: string;
+  country: string;
+  lat: number;
+  lng: number;
+}
+
+export const AIRPORTS: Record<string, Airport> = {
+  // --- North America ---
+  KJFK: { icao: 'KJFK', iata: 'JFK', name: 'John F. Kennedy International', city: 'New York', country: 'United States', lat: 40.6413, lng: -73.7781 },
+  KLAX: { icao: 'KLAX', iata: 'LAX', name: 'Los Angeles International', city: 'Los Angeles', country: 'United States', lat: 33.9416, lng: -118.4085 },
+  KORD: { icao: 'KORD', iata: 'ORD', name: "O'Hare International", city: 'Chicago', country: 'United States', lat: 41.9742, lng: -87.9073 },
+  KATL: { icao: 'KATL', iata: 'ATL', name: 'Hartsfield-Jackson Atlanta International', city: 'Atlanta', country: 'United States', lat: 33.6407, lng: -84.4277 },
+  KDFW: { icao: 'KDFW', iata: 'DFW', name: 'Dallas/Fort Worth International', city: 'Dallas', country: 'United States', lat: 32.8998, lng: -97.0403 },
+  KDEN: { icao: 'KDEN', iata: 'DEN', name: 'Denver International', city: 'Denver', country: 'United States', lat: 39.8561, lng: -104.6737 },
+  KSFO: { icao: 'KSFO', iata: 'SFO', name: 'San Francisco International', city: 'San Francisco', country: 'United States', lat: 37.6213, lng: -122.3790 },
+  KMIA: { icao: 'KMIA', iata: 'MIA', name: 'Miami International', city: 'Miami', country: 'United States', lat: 25.7959, lng: -80.2870 },
+  KIAD: { icao: 'KIAD', iata: 'IAD', name: 'Washington Dulles International', city: 'Washington D.C.', country: 'United States', lat: 38.9531, lng: -77.4565 },
+  KBOS: { icao: 'KBOS', iata: 'BOS', name: 'Boston Logan International', city: 'Boston', country: 'United States', lat: 42.3656, lng: -71.0096 },
+  KSEA: { icao: 'KSEA', iata: 'SEA', name: 'Seattle-Tacoma International', city: 'Seattle', country: 'United States', lat: 47.4502, lng: -122.3088 },
+  KEWR: { icao: 'KEWR', iata: 'EWR', name: 'Newark Liberty International', city: 'Newark', country: 'United States', lat: 40.6895, lng: -74.1745 },
+  KMEM: { icao: 'KMEM', iata: 'MEM', name: 'Memphis International', city: 'Memphis', country: 'United States', lat: 35.0424, lng: -89.9767 },
+  PANC: { icao: 'PANC', iata: 'ANC', name: 'Ted Stevens Anchorage International', city: 'Anchorage', country: 'United States', lat: 61.1743, lng: -149.9963 },
+  PHNL: { icao: 'PHNL', iata: 'HNL', name: 'Daniel K. Inouye International', city: 'Honolulu', country: 'United States', lat: 21.3187, lng: -157.9225 },
+  CYYZ: { icao: 'CYYZ', iata: 'YYZ', name: 'Toronto Pearson International', city: 'Toronto', country: 'Canada', lat: 43.6777, lng: -79.6248 },
+  CYVR: { icao: 'CYVR', iata: 'YVR', name: 'Vancouver International', city: 'Vancouver', country: 'Canada', lat: 49.1947, lng: -123.1792 },
+  CYUL: { icao: 'CYUL', iata: 'YUL', name: 'Montreal-Trudeau International', city: 'Montreal', country: 'Canada', lat: 45.4706, lng: -73.7408 },
+  MMMX: { icao: 'MMMX', iata: 'MEX', name: 'Mexico City International', city: 'Mexico City', country: 'Mexico', lat: 19.4363, lng: -99.0721 },
+  MMUN: { icao: 'MMUN', iata: 'CUN', name: 'Cancun International', city: 'Cancun', country: 'Mexico', lat: 21.0365, lng: -86.8771 },
+
+  // --- Europe ---
+  EGLL: { icao: 'EGLL', iata: 'LHR', name: 'London Heathrow', city: 'London', country: 'United Kingdom', lat: 51.4700, lng: -0.4543 },
+  EGKK: { icao: 'EGKK', iata: 'LGW', name: 'London Gatwick', city: 'London', country: 'United Kingdom', lat: 51.1537, lng: -0.1821 },
+  EHAM: { icao: 'EHAM', iata: 'AMS', name: 'Amsterdam Schiphol', city: 'Amsterdam', country: 'Netherlands', lat: 52.3105, lng: 4.7683 },
+  LFPG: { icao: 'LFPG', iata: 'CDG', name: 'Paris Charles de Gaulle', city: 'Paris', country: 'France', lat: 49.0097, lng: 2.5479 },
+  EDDF: { icao: 'EDDF', iata: 'FRA', name: 'Frankfurt Airport', city: 'Frankfurt', country: 'Germany', lat: 50.0379, lng: 8.5622 },
+  EDDM: { icao: 'EDDM', iata: 'MUC', name: 'Munich Airport', city: 'Munich', country: 'Germany', lat: 48.3537, lng: 11.7750 },
+  LEMD: { icao: 'LEMD', iata: 'MAD', name: 'Adolfo Suarez Madrid-Barajas', city: 'Madrid', country: 'Spain', lat: 40.4983, lng: -3.5676 },
+  LEBL: { icao: 'LEBL', iata: 'BCN', name: 'Barcelona-El Prat', city: 'Barcelona', country: 'Spain', lat: 41.2971, lng: 2.0785 },
+  LIRF: { icao: 'LIRF', iata: 'FCO', name: 'Leonardo da Vinci-Fiumicino', city: 'Rome', country: 'Italy', lat: 41.8003, lng: 12.2389 },
+  LSZH: { icao: 'LSZH', iata: 'ZRH', name: 'Zurich Airport', city: 'Zurich', country: 'Switzerland', lat: 47.4647, lng: 8.5492 },
+  LOWW: { icao: 'LOWW', iata: 'VIE', name: 'Vienna International', city: 'Vienna', country: 'Austria', lat: 48.1103, lng: 16.5697 },
+  EKCH: { icao: 'EKCH', iata: 'CPH', name: 'Copenhagen Airport', city: 'Copenhagen', country: 'Denmark', lat: 55.6180, lng: 12.6508 },
+  ESSA: { icao: 'ESSA', iata: 'ARN', name: 'Stockholm Arlanda', city: 'Stockholm', country: 'Sweden', lat: 59.6519, lng: 17.9186 },
+  EFHK: { icao: 'EFHK', iata: 'HEL', name: 'Helsinki-Vantaa', city: 'Helsinki', country: 'Finland', lat: 60.3172, lng: 24.9633 },
+  ENGM: { icao: 'ENGM', iata: 'OSL', name: 'Oslo Gardermoen', city: 'Oslo', country: 'Norway', lat: 60.1939, lng: 11.1004 },
+  LPPT: { icao: 'LPPT', iata: 'LIS', name: 'Lisbon Humberto Delgado', city: 'Lisbon', country: 'Portugal', lat: 38.7756, lng: -9.1354 },
+  EPWA: { icao: 'EPWA', iata: 'WAW', name: 'Warsaw Chopin', city: 'Warsaw', country: 'Poland', lat: 52.1657, lng: 20.9671 },
+  LGAV: { icao: 'LGAV', iata: 'ATH', name: 'Athens Eleftherios Venizelos', city: 'Athens', country: 'Greece', lat: 37.9364, lng: 23.9445 },
+  LTFM: { icao: 'LTFM', iata: 'IST', name: 'Istanbul Airport', city: 'Istanbul', country: 'Turkey', lat: 41.2753, lng: 28.7519 },
+  LTAI: { icao: 'LTAI', iata: 'AYT', name: 'Antalya Airport', city: 'Antalya', country: 'Turkey', lat: 36.8987, lng: 30.8005 },
+  BIKF: { icao: 'BIKF', iata: 'KEF', name: 'Keflavik International', city: 'Reykjavik', country: 'Iceland', lat: 63.9850, lng: -22.6056 },
+  EIDW: { icao: 'EIDW', iata: 'DUB', name: 'Dublin Airport', city: 'Dublin', country: 'Ireland', lat: 53.4264, lng: -6.2499 },
+  EBBR: { icao: 'EBBR', iata: 'BRU', name: 'Brussels Airport', city: 'Brussels', country: 'Belgium', lat: 50.9014, lng: 4.4844 },
+  UUEE: { icao: 'UUEE', iata: 'SVO', name: 'Sheremetyevo International', city: 'Moscow', country: 'Russia', lat: 55.9726, lng: 37.4146 },
+
+  // --- Middle East ---
+  OMDB: { icao: 'OMDB', iata: 'DXB', name: 'Dubai International', city: 'Dubai', country: 'United Arab Emirates', lat: 25.2528, lng: 55.3644 },
+  OMAL: { icao: 'OMAL', iata: 'AUH', name: 'Abu Dhabi International', city: 'Abu Dhabi', country: 'United Arab Emirates', lat: 24.4331, lng: 54.6511 },
+  OTHH: { icao: 'OTHH', iata: 'DOH', name: 'Hamad International', city: 'Doha', country: 'Qatar', lat: 25.2609, lng: 51.6138 },
+  OEJN: { icao: 'OEJN', iata: 'JED', name: 'King Abdulaziz International', city: 'Jeddah', country: 'Saudi Arabia', lat: 21.6796, lng: 39.1565 },
+  OERK: { icao: 'OERK', iata: 'RUH', name: 'King Khalid International', city: 'Riyadh', country: 'Saudi Arabia', lat: 24.9576, lng: 46.6988 },
+  OBBI: { icao: 'OBBI', iata: 'BAH', name: 'Bahrain International', city: 'Manama', country: 'Bahrain', lat: 26.2708, lng: 50.6336 },
+  OOMS: { icao: 'OOMS', iata: 'MCT', name: 'Muscat International', city: 'Muscat', country: 'Oman', lat: 23.5933, lng: 58.2844 },
+  OKBK: { icao: 'OKBK', iata: 'KWI', name: 'Kuwait International', city: 'Kuwait City', country: 'Kuwait', lat: 29.2266, lng: 47.9689 },
+  OLBA: { icao: 'OLBA', iata: 'BEY', name: 'Rafic Hariri International', city: 'Beirut', country: 'Lebanon', lat: 33.8209, lng: 35.4884 },
+  OJAI: { icao: 'OJAI', iata: 'AMM', name: 'Queen Alia International', city: 'Amman', country: 'Jordan', lat: 31.7226, lng: 35.9932 },
+  LLBG: { icao: 'LLBG', iata: 'TLV', name: 'Ben Gurion International', city: 'Tel Aviv', country: 'Israel', lat: 32.0055, lng: 34.8854 },
+  OIIE: { icao: 'OIIE', iata: 'IKA', name: 'Imam Khomeini International', city: 'Tehran', country: 'Iran', lat: 35.4161, lng: 51.1522 },
+  ORBI: { icao: 'ORBI', iata: 'BGW', name: 'Baghdad International', city: 'Baghdad', country: 'Iraq', lat: 33.2625, lng: 44.2346 },
+
+  // --- Asia ---
+  VHHH: { icao: 'VHHH', iata: 'HKG', name: 'Hong Kong International', city: 'Hong Kong', country: 'China', lat: 22.3080, lng: 113.9185 },
+  ZBAA: { icao: 'ZBAA', iata: 'PEK', name: 'Beijing Capital International', city: 'Beijing', country: 'China', lat: 40.0801, lng: 116.5846 },
+  ZSPD: { icao: 'ZSPD', iata: 'PVG', name: 'Shanghai Pudong International', city: 'Shanghai', country: 'China', lat: 31.1443, lng: 121.8083 },
+  ZGGG: { icao: 'ZGGG', iata: 'CAN', name: 'Guangzhou Baiyun International', city: 'Guangzhou', country: 'China', lat: 23.3924, lng: 113.2988 },
+  RJTT: { icao: 'RJTT', iata: 'HND', name: 'Tokyo Haneda', city: 'Tokyo', country: 'Japan', lat: 35.5494, lng: 139.7798 },
+  RJAA: { icao: 'RJAA', iata: 'NRT', name: 'Narita International', city: 'Tokyo', country: 'Japan', lat: 35.7647, lng: 140.3864 },
+  RKSI: { icao: 'RKSI', iata: 'ICN', name: 'Incheon International', city: 'Seoul', country: 'South Korea', lat: 37.4602, lng: 126.4407 },
+  WSSS: { icao: 'WSSS', iata: 'SIN', name: 'Singapore Changi', city: 'Singapore', country: 'Singapore', lat: 1.3644, lng: 103.9915 },
+  VTBS: { icao: 'VTBS', iata: 'BKK', name: 'Suvarnabhumi', city: 'Bangkok', country: 'Thailand', lat: 13.6900, lng: 100.7501 },
+  WMKK: { icao: 'WMKK', iata: 'KUL', name: 'Kuala Lumpur International', city: 'Kuala Lumpur', country: 'Malaysia', lat: 2.7456, lng: 101.7099 },
+  WIII: { icao: 'WIII', iata: 'CGK', name: 'Soekarno-Hatta International', city: 'Jakarta', country: 'Indonesia', lat: -6.1256, lng: 106.6559 },
+  RPLL: { icao: 'RPLL', iata: 'MNL', name: 'Ninoy Aquino International', city: 'Manila', country: 'Philippines', lat: 14.5086, lng: 121.0198 },
+  VVNB: { icao: 'VVNB', iata: 'HAN', name: 'Noi Bai International', city: 'Hanoi', country: 'Vietnam', lat: 21.2212, lng: 105.8070 },
+  VIDP: { icao: 'VIDP', iata: 'DEL', name: 'Indira Gandhi International', city: 'New Delhi', country: 'India', lat: 28.5562, lng: 77.1000 },
+  VABB: { icao: 'VABB', iata: 'BOM', name: 'Chhatrapati Shivaji Maharaj International', city: 'Mumbai', country: 'India', lat: 19.0896, lng: 72.8656 },
+  VOBL: { icao: 'VOBL', iata: 'BLR', name: 'Kempegowda International', city: 'Bangalore', country: 'India', lat: 13.1979, lng: 77.7063 },
+  OPKC: { icao: 'OPKC', iata: 'KHI', name: 'Jinnah International', city: 'Karachi', country: 'Pakistan', lat: 24.9065, lng: 67.1609 },
+  RCTP: { icao: 'RCTP', iata: 'TPE', name: 'Taiwan Taoyuan International', city: 'Taipei', country: 'Taiwan', lat: 25.0797, lng: 121.2342 },
+  ZMUB: { icao: 'ZMUB', iata: 'UBN', name: 'Chinggis Khaan International', city: 'Ulaanbaatar', country: 'Mongolia', lat: 47.8431, lng: 106.7672 },
+
+  // --- Africa ---
+  FAOR: { icao: 'FAOR', iata: 'JNB', name: 'O.R. Tambo International', city: 'Johannesburg', country: 'South Africa', lat: -26.1392, lng: 28.2460 },
+  FACT: { icao: 'FACT', iata: 'CPT', name: 'Cape Town International', city: 'Cape Town', country: 'South Africa', lat: -33.9649, lng: 18.6017 },
+  HAAB: { icao: 'HAAB', iata: 'ADD', name: 'Addis Ababa Bole International', city: 'Addis Ababa', country: 'Ethiopia', lat: 8.9779, lng: 38.7993 },
+  HKJK: { icao: 'HKJK', iata: 'NBO', name: 'Jomo Kenyatta International', city: 'Nairobi', country: 'Kenya', lat: -1.3192, lng: 36.9278 },
+  HECA: { icao: 'HECA', iata: 'CAI', name: 'Cairo International', city: 'Cairo', country: 'Egypt', lat: 30.1219, lng: 31.4056 },
+  GMMN: { icao: 'GMMN', iata: 'CMN', name: 'Mohammed V International', city: 'Casablanca', country: 'Morocco', lat: 33.3675, lng: -7.5898 },
+  DNMM: { icao: 'DNMM', iata: 'LOS', name: 'Murtala Muhammed International', city: 'Lagos', country: 'Nigeria', lat: 6.5774, lng: 3.3213 },
+  DIAP: { icao: 'DIAP', iata: 'ABJ', name: 'Felix Houphouet-Boigny International', city: 'Abidjan', country: 'Ivory Coast', lat: 5.2614, lng: -3.9263 },
+  HRYR: { icao: 'HRYR', iata: 'KGL', name: 'Kigali International', city: 'Kigali', country: 'Rwanda', lat: -1.9686, lng: 30.1395 },
+
+  // --- South America ---
+  SBGR: { icao: 'SBGR', iata: 'GRU', name: 'Sao Paulo-Guarulhos International', city: 'Sao Paulo', country: 'Brazil', lat: -23.4356, lng: -46.4731 },
+  SBGL: { icao: 'SBGL', iata: 'GIG', name: 'Rio de Janeiro-Galeao International', city: 'Rio de Janeiro', country: 'Brazil', lat: -22.8100, lng: -43.2506 },
+  SCEL: { icao: 'SCEL', iata: 'SCL', name: 'Santiago International', city: 'Santiago', country: 'Chile', lat: -33.3930, lng: -70.7858 },
+  SAEZ: { icao: 'SAEZ', iata: 'EZE', name: 'Ministro Pistarini International', city: 'Buenos Aires', country: 'Argentina', lat: -34.8222, lng: -58.5358 },
+  SKBO: { icao: 'SKBO', iata: 'BOG', name: 'El Dorado International', city: 'Bogota', country: 'Colombia', lat: 4.7016, lng: -74.1469 },
+  SPJC: { icao: 'SPJC', iata: 'LIM', name: 'Jorge Chavez International', city: 'Lima', country: 'Peru', lat: -12.0219, lng: -77.1143 },
+  SEQM: { icao: 'SEQM', iata: 'UIO', name: 'Mariscal Sucre International', city: 'Quito', country: 'Ecuador', lat: -0.1292, lng: -78.3575 },
+  SLLP: { icao: 'SLLP', iata: 'LPB', name: 'El Alto International', city: 'La Paz', country: 'Bolivia', lat: -16.5133, lng: -68.1922 },
+  MPTO: { icao: 'MPTO', iata: 'PTY', name: 'Tocumen International', city: 'Panama City', country: 'Panama', lat: 9.0714, lng: -79.3835 },
+
+  // --- Oceania ---
+  YSSY: { icao: 'YSSY', iata: 'SYD', name: 'Sydney Kingsford Smith', city: 'Sydney', country: 'Australia', lat: -33.9461, lng: 151.1772 },
+  YMML: { icao: 'YMML', iata: 'MEL', name: 'Melbourne Airport', city: 'Melbourne', country: 'Australia', lat: -37.6690, lng: 144.8410 },
+  NZAA: { icao: 'NZAA', iata: 'AKL', name: 'Auckland Airport', city: 'Auckland', country: 'New Zealand', lat: -37.0082, lng: 174.7850 },
+};
+
+export const PORTS: Record<string, Port> = {
+  ROTTERDAM: { name: 'Port of Rotterdam', country: 'Netherlands', lat: 51.9, lng: 4.5 },
+  SHANGHAI: { name: 'Port of Shanghai', country: 'China', lat: 31.4, lng: 121.5 },
+  SINGAPORE: { name: 'Port of Singapore', country: 'Singapore', lat: 1.3, lng: 103.8 },
+  BUSAN: { name: 'Port of Busan', country: 'South Korea', lat: 35.1, lng: 129.1 },
+  HONG_KONG: { name: 'Port of Hong Kong', country: 'China', lat: 22.3, lng: 114.2 },
+  LONG_BEACH: { name: 'Port of Long Beach', country: 'United States', lat: 33.75, lng: -118.2 },
+  LOS_ANGELES: { name: 'Port of Los Angeles', country: 'United States', lat: 33.7, lng: -118.3 },
+  HAMBURG: { name: 'Port of Hamburg', country: 'Germany', lat: 53.5, lng: 10.0 },
+  ANTWERP: { name: 'Port of Antwerp', country: 'Belgium', lat: 51.3, lng: 4.4 },
+  FELIXSTOWE: { name: 'Port of Felixstowe', country: 'United Kingdom', lat: 51.96, lng: 1.35 },
+  PIRAEUS: { name: 'Port of Piraeus', country: 'Greece', lat: 37.9, lng: 23.6 },
+  SANTOS: { name: 'Port of Santos', country: 'Brazil', lat: -23.95, lng: -46.3 },
+  CAPE_TOWN: { name: 'Port of Cape Town', country: 'South Africa', lat: -33.9, lng: 18.4 },
+  MUMBAI: { name: 'Port of Mumbai', country: 'India', lat: 18.9, lng: 72.8 },
+  DUBAI: { name: 'Port of Jebel Ali', country: 'UAE', lat: 25.0, lng: 55.1 },
+  SUEZ: { name: 'Port of Suez', country: 'Egypt', lat: 29.97, lng: 32.55 },
+  YOKOHAMA: { name: 'Port of Yokohama', country: 'Japan', lat: 35.45, lng: 139.65 },
+  TOKYO: { name: 'Port of Tokyo', country: 'Japan', lat: 35.6, lng: 139.8 },
+  NEW_YORK: { name: 'Port of New York', country: 'United States', lat: 40.67, lng: -74.04 },
+  MIAMI: { name: 'Port of Miami', country: 'United States', lat: 25.77, lng: -80.17 },
+  BARCELONA: { name: 'Port of Barcelona', country: 'Spain', lat: 41.35, lng: 2.17 },
+  CALAIS: { name: 'Port of Calais', country: 'France', lat: 50.95, lng: 1.86 },
+  RAS_TANURA: { name: 'Ras Tanura', country: 'Saudi Arabia', lat: 26.63, lng: 50.17 },
+  VIGO: { name: 'Port of Vigo', country: 'Spain', lat: 42.24, lng: -8.72 },
+  TROMSO: { name: 'Port of Tromso', country: 'Norway', lat: 69.65, lng: 18.96 },
+  GENOA: { name: 'Port of Genoa', country: 'Italy', lat: 44.41, lng: 8.93 },
+  MARSEILLE: { name: 'Port of Marseille', country: 'France', lat: 43.30, lng: 5.37 },
+  ALGECIRAS: { name: 'Port of Algeciras', country: 'Spain', lat: 36.13, lng: -5.44 },
+  DOVER: { name: 'Port of Dover', country: 'United Kingdom', lat: 51.12, lng: 1.32 },
+  BREMERHAVEN: { name: 'Port of Bremerhaven', country: 'Germany', lat: 53.54, lng: 8.58 },
+  LE_HAVRE: { name: 'Port of Le Havre', country: 'France', lat: 49.48, lng: 0.11 },
+  JEDDAH: { name: 'Port of Jeddah', country: 'Saudi Arabia', lat: 21.49, lng: 39.17 },
+  FUJAIRAH: { name: 'Port of Fujairah', country: 'UAE', lat: 25.12, lng: 56.34 },
+  BANDAR_ABBAS: { name: 'Port of Bandar Abbas', country: 'Iran', lat: 27.19, lng: 56.27 },
+  KARACHI: { name: 'Port of Karachi', country: 'Pakistan', lat: 24.85, lng: 66.98 },
+  NINGBO: { name: 'Port of Ningbo-Zhoushan', country: 'China', lat: 29.87, lng: 121.88 },
+  SHENZHEN: { name: 'Port of Shenzhen', country: 'China', lat: 22.48, lng: 113.90 },
+  KAOHSIUNG: { name: 'Port of Kaohsiung', country: 'Taiwan', lat: 22.62, lng: 120.27 },
+  TANJUNG_PELEPAS: { name: 'Port of Tanjung Pelepas', country: 'Malaysia', lat: 1.37, lng: 103.55 },
+  LAEM_CHABANG: { name: 'Port of Laem Chabang', country: 'Thailand', lat: 13.08, lng: 100.88 },
+  HO_CHI_MINH: { name: 'Port of Ho Chi Minh City', country: 'Vietnam', lat: 10.76, lng: 106.74 },
+  SAVANNAH: { name: 'Port of Savannah', country: 'United States', lat: 32.08, lng: -81.09 },
+  NORFOLK: { name: 'Port of Norfolk', country: 'United States', lat: 36.85, lng: -76.29 },
+  HOUSTON: { name: 'Port of Houston', country: 'United States', lat: 29.73, lng: -95.02 },
+  BUENOS_AIRES: { name: 'Port of Buenos Aires', country: 'Argentina', lat: -34.59, lng: -58.37 },
+  VALPARAISO: { name: 'Port of Valparaiso', country: 'Chile', lat: -33.04, lng: -71.63 },
+  CALLAO: { name: 'Port of Callao', country: 'Peru', lat: -12.05, lng: -77.14 },
+  DURBAN: { name: 'Port of Durban', country: 'South Africa', lat: -29.87, lng: 31.05 },
+  LAGOS: { name: 'Port of Lagos', country: 'Nigeria', lat: 6.43, lng: 3.41 },
+  MOMBASA: { name: 'Port of Mombasa', country: 'Kenya', lat: -4.04, lng: 39.66 },
+  PORT_SAID: { name: 'Port Said', country: 'Egypt', lat: 31.27, lng: 32.30 },
+  ADEN: { name: 'Port of Aden', country: 'Yemen', lat: 12.79, lng: 45.03 },
+  DJIBOUTI: { name: 'Port of Djibouti', country: 'Djibouti', lat: 11.59, lng: 43.14 },
+  BERGEN: { name: 'Port of Bergen', country: 'Norway', lat: 60.39, lng: 5.32 },
+  MURMANSK: { name: 'Port of Murmansk', country: 'Russia', lat: 68.97, lng: 33.07 },
+  GOTHENBURG: { name: 'Port of Gothenburg', country: 'Sweden', lat: 57.70, lng: 11.94 },
+  CIVITAVECCHIA: { name: 'Port of Civitavecchia', country: 'Italy', lat: 42.09, lng: 11.79 },
+  PALMA: { name: 'Port of Palma', country: 'Spain', lat: 39.56, lng: 2.63 },
+  SOUTHAMPTON: { name: 'Port of Southampton', country: 'United Kingdom', lat: 50.90, lng: -1.40 },
+  COZUMEL: { name: 'Port of Cozumel', country: 'Mexico', lat: 20.51, lng: -86.95 },
+  NASSAU: { name: 'Port of Nassau', country: 'Bahamas', lat: 25.08, lng: -77.34 },
+  COLOMBO: { name: 'Port of Colombo', country: 'Sri Lanka', lat: 6.94, lng: 79.85 },
+  ALEXANDRIA: { name: 'Port of Alexandria', country: 'Egypt', lat: 31.20, lng: 29.89 },
+  HAIFA: { name: 'Port of Haifa', country: 'Israel', lat: 32.82, lng: 35.00 },
+  KOBE: { name: 'Port of Kobe', country: 'Japan', lat: 34.68, lng: 135.20 },
+  HAMMERFEST: { name: 'Port of Hammerfest', country: 'Norway', lat: 70.66, lng: 23.68 },
+  LISBON: { name: 'Port of Lisbon', country: 'Portugal', lat: 38.71, lng: -9.14 },
+  ANTIGUA: { name: 'Port of St. Johns', country: 'Antigua', lat: 17.12, lng: -61.85 },
+};
+
+export function findAirportByIATA(iata: string): Airport | null {
+  for (const a of Object.values(AIRPORTS)) {
+    if (a.iata === iata.toUpperCase()) return a;
+  }
+  return null;
+}
+
+export function findAirportByICAO(icao: string): Airport | null {
+  return AIRPORTS[icao.toUpperCase()] || null;
+}

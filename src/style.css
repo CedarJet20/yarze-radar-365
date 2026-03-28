@@ -664,6 +664,155 @@ html, body {
   color: var(--text-muted);
 }
 
+/* ---- Vehicle Icons on Globe ---- */
+.vehicle-icon {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.8s ease;
+}
+
+.vehicle-icon svg {
+  display: block;
+}
+
+.vehicle-icon:hover {
+  z-index: 100;
+}
+
+.vehicle-icon:hover svg {
+  filter: brightness(1.5) drop-shadow(0 0 8px currentColor) !important;
+}
+
+.vehicle-label {
+  position: absolute;
+  top: 100%;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  text-shadow: 0 0 4px rgba(0,0,0,0.8), 0 1px 2px rgba(0,0,0,0.9);
+  pointer-events: none;
+}
+
+/* ---- Panel Icon SVG ---- */
+.panel-icon-svg {
+  flex-shrink: 0;
+}
+
+.panel-icon-svg svg {
+  width: 40px;
+  height: 40px;
+}
+
+/* ---- Route Display (Progress Bar) ---- */
+.route-section {
+  background: rgba(0, 212, 255, 0.02);
+}
+
+.route-display {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.route-endpoint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 55px;
+  text-align: center;
+}
+
+.route-code {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.route-city {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.route-name {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.route-progress-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 8px;
+}
+
+.route-line {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 4px;
+  position: relative;
+  overflow: visible;
+}
+
+.route-line-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.route-plane-indicator {
+  position: absolute;
+  top: -8px;
+  transform: translateX(-50%);
+  font-size: 16px;
+  transition: left 0.5s ease;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.route-progress-text {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.route-times {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.route-time {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.route-time .field-label {
+  font-size: 0.55rem;
+}
+
+.route-time .field-value {
+  font-size: 0.72rem;
+}
+
 /* ---- Globe tooltip overrides ---- */
 .scene-tooltip {
   font-family: var(--font-mono) !important;

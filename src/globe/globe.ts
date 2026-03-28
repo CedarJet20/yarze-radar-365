@@ -6,7 +6,8 @@
 import Globe from 'globe.gl';
 import type { GlobeInstance } from 'globe.gl';
 import * as THREE from 'three';
-import type { Vehicle, GlobePoint, FilterState } from '../types';
+import type { Vehicle, FilterState } from '../types';
+import { createVehicleElement } from '../ui/icons';
 
 // Colors by vehicle type
 const AIRCRAFT_COLORS: Record<string, string> = {
@@ -32,39 +33,34 @@ function getVehicleColor(v: Vehicle): string {
   return VESSEL_COLORS[v.vesselType] || '#4fc3f7';
 }
 
-function getVehicleSize(v: Vehicle): number {
-  if (v.type === 'aircraft') {
-    if (v.category === 'helicopter') return 0.3;
-    if (v.category === 'private') return 0.35;
-    if (v.category === 'military') return 0.5;
-    return 0.4;
-  }
-  // Vessels — scale by length
-  if (v.length > 350) return 0.6;
-  if (v.length > 200) return 0.5;
-  if (v.length > 100) return 0.4;
-  return 0.3;
-}
-
 function getVehicleAlt(v: Vehicle): number {
   if (v.type === 'aircraft') {
-    // Scale altitude for visibility (real alt in meters → globe units)
     const alt = v.geoAltitude ?? v.baroAltitude ?? 0;
-    return Math.max(0.005, alt / 1_000_000); // subtle elevation
+    return Math.max(0.005, alt / 1_000_000);
   }
-  return 0.001; // vessels at sea level
+  return 0.001;
 }
 
 function getVehicleLabel(v: Vehicle): string {
-  if (v.type === 'aircraft') {
-    return v.callsign || v.icao24;
-  }
+  if (v.type === 'aircraft') return v.callsign || v.icao24;
   return v.name || v.mmsi;
 }
 
 function getVehicleId(v: Vehicle): string {
   return v.type === 'aircraft' ? v.icao24 : v.mmsi;
 }
+
+interface HtmlDatum {
+  id: string;
+  lat: number;
+  lng: number;
+  alt: number;
+  vehicle: Vehicle;
+  color: string;
+}
+
+// Cache for HTML elements to avoid re-creating on every update
+const elementCache = new Map<string, HTMLDivElement>();
 
 export function createGlobe(
   container: HTMLElement,
@@ -83,38 +79,44 @@ export function createGlobe(
     .showAtmosphere(true)
     .atmosphereColor('#4da6ff')
     .atmosphereAltitude(0.2)
-    // Points layer for vehicles
-    .pointsData([])
-    .pointLat((d: any) => d.lat)
-    .pointLng((d: any) => d.lng)
-    .pointAltitude((d: any) => d.alt)
-    .pointColor((d: any) => d.color)
-    .pointRadius((d: any) => d.size)
-    .pointLabel((d: any) => {
-      const v = d.vehicle;
-      if (v.type === 'aircraft') {
-        return `
-          <div style="background:rgba(0,0,0,0.85);padding:8px 12px;border-radius:6px;border:1px solid ${d.color};font-family:monospace;font-size:12px;color:#fff;min-width:180px">
-            <div style="color:${d.color};font-weight:bold;font-size:14px;margin-bottom:4px">${v.callsign || v.icao24}</div>
-            <div>Type: <span style="color:${d.color}">${v.category.toUpperCase()}</span></div>
-            <div>Country: ${v.originCountry}</div>
-            <div>Alt: ${v.altitudeFeet.toLocaleString()} ft</div>
-            <div>Speed: ${v.speedKnots} kts</div>
-            <div>Heading: ${Math.round(v.heading)}°</div>
-          </div>`;
+    // HTML elements layer for vehicle icons
+    .htmlElementsData([])
+    .htmlLat((d: any) => d.lat)
+    .htmlLng((d: any) => d.lng)
+    .htmlAltitude((d: any) => d.alt)
+    .htmlElement((d: any) => {
+      const datum = d as HtmlDatum;
+      const v = datum.vehicle;
+      const id = datum.id;
+      const color = datum.color;
+
+      // Re-use cached element if exists, update rotation
+      let el = elementCache.get(id);
+      if (el) {
+        const heading = v.type === 'aircraft' ? v.heading : v.heading;
+        el.style.transform = `rotate(${heading}deg)`;
+        const labelEl = el.querySelector('.vehicle-label') as HTMLElement;
+        if (labelEl) labelEl.style.transform = `rotate(${-heading}deg)`;
+        return el;
       }
-      return `
-        <div style="background:rgba(0,0,0,0.85);padding:8px 12px;border-radius:6px;border:1px solid ${d.color};font-family:monospace;font-size:12px;color:#fff;min-width:180px">
-          <div style="color:${d.color};font-weight:bold;font-size:14px;margin-bottom:4px">${v.name}</div>
-          <div>Type: <span style="color:${d.color}">${v.vesselType.toUpperCase()}</span></div>
-          <div>Flag: ${v.flag}</div>
-          <div>Speed: ${v.speed.toFixed(1)} kts</div>
-          <div>Dest: ${v.destination || 'N/A'}</div>
-        </div>`;
+
+      // Create new element
+      const heading = v.type === 'aircraft' ? v.heading : v.heading;
+      const subtype = v.type === 'aircraft' ? v.aircraftSize : v.vesselType;
+      const engines = v.type === 'aircraft' ? v.engineCount : 0;
+      const label = getVehicleLabel(v);
+
+      el = createVehicleElement(v.type, subtype, engines, color, heading, label);
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        onVehicleClick(v);
+      });
+      el.style.cursor = 'pointer';
+
+      elementCache.set(id, el);
+      return el;
     })
-    .onPointClick((point: any) => {
-      if (point?.vehicle) onVehicleClick(point.vehicle);
-    })
+    .htmlTransitionDuration(800)
     // Paths layer for trajectories
     .pathsData([])
     .pathPoints('coords')
@@ -183,24 +185,30 @@ export function createGlobe(
       if (query) {
         const label = getVehicleLabel(v).toLowerCase();
         const country = v.type === 'aircraft' ? v.originCountry.toLowerCase() : v.flag.toLowerCase();
-        if (!label.includes(query) && !country.includes(query)) return false;
+        const extra = v.type === 'aircraft'
+          ? (v.airlineName + ' ' + v.tailNumber + ' ' + v.aircraftModel).toLowerCase()
+          : v.destination.toLowerCase();
+        if (!label.includes(query) && !country.includes(query) && !extra.includes(query)) return false;
       }
       return true;
     });
 
-    const points: GlobePoint[] = filtered.map(v => ({
+    // Clear stale cache entries
+    const activeIds = new Set(filtered.map(v => getVehicleId(v)));
+    for (const [id] of elementCache) {
+      if (!activeIds.has(id)) elementCache.delete(id);
+    }
+
+    const htmlData: HtmlDatum[] = filtered.map(v => ({
       id: getVehicleId(v),
       lat: v.latitude,
       lng: v.longitude,
       alt: getVehicleAlt(v),
-      color: getVehicleColor(v),
-      size: getVehicleSize(v),
-      label: getVehicleLabel(v),
       vehicle: v,
-      rotation: v.type === 'aircraft' ? v.heading : v.heading,
+      color: getVehicleColor(v),
     }));
 
-    globe.pointsData(points);
+    globe.htmlElementsData(htmlData);
   }
 
   function showTrajectory(vehicle: Vehicle | null) {
@@ -210,17 +218,15 @@ export function createGlobe(
       return;
     }
 
-    // Past trajectory
     const pathCoords = vehicle.trajectory.map(p => [p.lat, p.lng, 0.001]);
-    // Add current position
     pathCoords.push([vehicle.latitude, vehicle.longitude, getVehicleAlt(vehicle)]);
 
     globe.pathsData([{ coords: pathCoords }]);
 
-    // Future heading prediction (extrapolate ~200km ahead)
+    // Future heading prediction
     const heading = vehicle.type === 'aircraft' ? vehicle.heading : vehicle.heading;
     const headingRad = (heading * Math.PI) / 180;
-    const distance = vehicle.type === 'aircraft' ? 3 : 1.5; // degrees ahead
+    const distance = vehicle.type === 'aircraft' ? 3 : 1.5;
     const endLat = vehicle.latitude + Math.cos(headingRad) * distance;
     const endLng = vehicle.longitude + Math.sin(headingRad) * distance;
 
