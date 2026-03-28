@@ -20,25 +20,64 @@ const FR_BASE = `https://${RAPIDAPI_HOST}`;
 
 // Bounding boxes covering major aviation regions worldwide
 // Each box: [bl_lat, bl_lng, tr_lat, tr_lng] (bottom-left to top-right)
+// Smaller zones to stay under 300/zone API cap — ~40 zones for ~10k+ aircraft
 const FETCH_ZONES: [number, number, number, number][] = [
-  // North America
-  [24, -130, 50, -90],    // Western US + Mexico
-  [24, -90, 50, -60],     // Eastern US + Canada East
-  // Europe
-  [35, -12, 55, 15],      // Western Europe
-  [35, 15, 60, 40],       // Eastern Europe
-  [55, -12, 72, 40],      // Northern Europe / Scandinavia
+  // North America — dense coverage
+  [40, -130, 50, -110],   // Pacific NW
+  [30, -130, 40, -110],   // California / SW
+  [40, -110, 50, -90],    // Midwest / Mountain
+  [30, -110, 40, -90],    // Texas / South Central
+  [40, -90, 50, -70],     // Great Lakes / NE
+  [30, -90, 40, -70],     // Southeast
+  [24, -90, 30, -70],     // Florida / Gulf
+  [40, -70, 50, -50],     // New England / Atlantic
+  [50, -130, 60, -80],    // Canada West + Central
+  [50, -80, 60, -50],     // Canada East
+  [14, -120, 24, -85],    // Mexico / Central America
+
+  // Europe — dense coverage
+  [48, -12, 55, 3],       // UK / Ireland / Benelux
+  [55, -12, 65, 10],      // Scandinavia West
+  [55, 10, 65, 30],       // Scandinavia East / Baltic
+  [44, -12, 48, 3],       // France / Iberia North
+  [35, -12, 44, 3],       // Spain / Portugal
+  [44, 3, 48, 15],        // France East / Switzerland / Germany South
+  [48, 3, 55, 15],        // Germany / Benelux / Poland West
+  [44, 15, 55, 30],       // Central / Eastern Europe
+  [35, 3, 44, 15],        // Italy / Mediterranean
+  [35, 15, 44, 30],       // Greece / Turkey West / Balkans
+  [44, 30, 55, 45],       // Eastern Europe / Ukraine / Russia West
+
   // Middle East
-  [12, 30, 42, 65],       // Middle East + Central Asia
+  [20, 30, 32, 50],       // Arabian Peninsula / Egypt
+  [32, 30, 42, 50],       // Levant / Turkey East / Iraq
+  [20, 50, 32, 65],       // Gulf states / Iran West
+  [32, 50, 42, 65],       // Iran / Central Asia West
+
   // Asia
-  [20, 65, 45, 110],      // South + East Asia (west)
-  [10, 95, 45, 145],      // Southeast + East Asia (east)
+  [30, 65, 42, 90],       // South Asia North / Pakistan / India North
+  [10, 65, 30, 90],       // India / Sri Lanka
+  [30, 90, 42, 115],      // China West / Central
+  [20, 90, 30, 115],      // China South / Vietnam / Myanmar
+  [30, 115, 45, 145],     // China East / Korea / Japan
+  [10, 95, 20, 120],      // Southeast Asia
+  [-10, 95, 10, 120],     // Indonesia / Malaysia
+
   // Oceania
-  [-45, 110, -5, 180],    // Australia + NZ
+  [-25, 110, -10, 155],   // Australia North
+  [-45, 110, -25, 155],   // Australia South
+  [-50, 155, -30, 180],   // New Zealand
+
   // South America
-  [-55, -80, 15, -30],    // South America
+  [-10, -80, 15, -50],    // Northern South America / Caribbean
+  [-30, -70, -10, -35],   // Brazil / Central SA
+  [-55, -80, -30, -50],   // Southern SA (Argentina / Chile)
+
   // Africa
-  [-35, -20, 38, 55],     // Africa
+  [20, -20, 38, 40],      // North Africa
+  [0, -20, 20, 25],       // West Africa
+  [0, 25, 20, 55],        // East Africa
+  [-35, 10, 0, 55],       // Southern Africa
 ];
 
 // ============================================================
@@ -210,9 +249,9 @@ async function fetchFRzone(bl_lat: number, bl_lng: number, tr_lat: number, tr_ln
 async function fetchFromFlightRadar(): Promise<Aircraft[]> {
   console.log('Fetching aircraft from Flight Radar1 (RapidAPI)...');
 
-  // Fetch all zones in batches of 3 to respect rate limits
+  // Fetch all zones in batches of 4
   const seen = new Map<string, Aircraft>();
-  const BATCH_SIZE = 3;
+  const BATCH_SIZE = 4;
 
   for (let i = 0; i < FETCH_ZONES.length; i += BATCH_SIZE) {
     const batch = FETCH_ZONES.slice(i, i + BATCH_SIZE);

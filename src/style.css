@@ -501,6 +501,29 @@ html, body {
   border-top: 1px solid var(--border);
 }
 
+.refresh-btn {
+  width: 100%;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  background: rgba(0, 212, 255, 0.12);
+  border: 1px solid var(--accent-blue);
+  color: var(--accent-blue);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.refresh-btn:hover {
+  background: rgba(0, 212, 255, 0.25);
+}
+.refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .update-time {
   font-family: var(--font-mono);
   font-size: 0.65rem;

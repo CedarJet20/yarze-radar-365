@@ -129,6 +129,7 @@ export function createControls(
     </div>
 
     <div class="controls-footer">
+      <button class="refresh-btn" id="refresh-btn">&#8635; Refresh Data</button>
       <div class="update-time">
         Last update: <span id="last-update">--</span>
       </div>
@@ -212,6 +213,19 @@ export function createControls(
     controlsEl.querySelector('#sea-options')!.classList.toggle('collapsed');
     const icon = controlsEl.querySelector('#sea-expand')!;
     icon.textContent = icon.textContent === '\u25BC' ? '\u25B6' : '\u25BC';
+  });
+
+  // Refresh button
+  const refreshBtn = controlsEl.querySelector('#refresh-btn') as HTMLButtonElement;
+  refreshBtn.addEventListener('click', () => {
+    if ((window as any).__refreshData) {
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = '⟳ Refreshing...';
+      (window as any).__refreshData().then(() => {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = '⟳ Refresh Data';
+      });
+    }
   });
 
   function updateStats(aircraftCount: number, vesselCount: number) {

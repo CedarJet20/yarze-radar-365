@@ -152,9 +152,11 @@ async function loadData() {
   }
 }
 
-// --- Auto-refresh every 60 seconds (conserve API quota) ---
-setInterval(async () => {
+// --- Manual refresh (no auto-refresh to conserve API quota) ---
+async function refreshData() {
   if (state.isLoading) return;
+  state.isLoading = true;
+  console.log('[YR365] Manual refresh...');
 
   try {
     const [aircraft, vessels] = await Promise.all([
@@ -205,4 +207,9 @@ setInterval(async () => {
   } catch (err) {
     console.warn('Refresh failed:', err);
   }
-}, 60000);
+
+  state.isLoading = false;
+}
+
+// Expose refresh for the UI button
+(window as any).__refreshData = refreshData;
