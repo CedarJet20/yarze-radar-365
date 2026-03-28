@@ -195,4 +195,4 @@ setInterval(async () => {
   } catch (err) {
     console.warn('Refresh failed:', err);
   }
-}, 15000);
+}, 30000);

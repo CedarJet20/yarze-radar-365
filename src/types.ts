@@ -100,11 +100,7 @@ export interface AppState {
   globeReady: boolean;
 }
 
-// OpenSky Network API response types
-export interface OpenSkyState {
-  time: number;
-  states: (string | number | boolean | number[] | null)[][] | null;
-}
+// (ADSB.lol API types are defined in opensky.ts)
 
 // Globe point data for rendering
 export interface GlobePoint {

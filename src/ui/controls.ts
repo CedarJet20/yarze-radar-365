@@ -133,7 +133,7 @@ export function createControls(
         Last update: <span id="last-update">--</span>
       </div>
       <div class="data-source">
-        Air: OpenSky Network ADS-B<br/>
+        Air: ADSB.lol Global ADS-B<br/>
         Sea: AIS Simulation
       </div>
     </div>
