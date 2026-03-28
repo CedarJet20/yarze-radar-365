@@ -70,9 +70,19 @@ const infoPanel = createInfoPanel(rightColumn, () => {
 
 function onGlobeReady() {
   state.globeReady = true;
+  console.log('[YR365] Globe ready');
   loadingStatus.textContent = 'Globe ready. Loading traffic data...';
   loadData();
 }
+
+// Safety: force hide loading screen after 30s even if load fails
+setTimeout(() => {
+  if (loadingScreen.style.display !== 'none') {
+    console.warn('[YR365] Force-hiding loading screen after timeout');
+    loadingScreen.classList.add('fade-out');
+    setTimeout(() => { loadingScreen.style.display = 'none'; }, 600);
+  }
+}, 30000);
 
 function onVehicleClick(vehicle: Vehicle) {
   state.selectedVehicle = vehicle;
@@ -107,7 +117,8 @@ function renderVehicles() {
 // --- Data Loading ---
 
 async function loadData() {
-  loadingStatus.textContent = 'Fetching air traffic (ADS-B)...';
+  loadingStatus.textContent = 'Fetching air traffic data...';
+  console.log('[YR365] Starting data load...');
 
   try {
     const [aircraft, vessels] = await Promise.all([
@@ -115,6 +126,7 @@ async function loadData() {
       Promise.resolve(fetchAllVessels()),
     ]);
 
+    console.log(`[YR365] Loaded ${aircraft.length} aircraft, ${vessels.length} vessels`);
     loadingStatus.textContent = `Loaded ${aircraft.length} aircraft, ${vessels.length} vessels`;
 
     state.vehicles.clear();
@@ -122,11 +134,9 @@ async function loadData() {
     vessels.forEach(v => state.vehicles.set(v.mmsi, v));
     state.lastUpdate = Date.now();
 
-    const aircraftCount = aircraft.length;
-    const vesselCount = vessels.length;
-    controls.updateStats(aircraftCount, vesselCount);
-
+    controls.updateStats(aircraft.length, vessels.length);
     renderVehicles();
+    console.log(`[YR365] Rendered ${state.vehicles.size} vehicles on globe`);
 
     // Hide loading screen
     setTimeout(() => {
@@ -136,7 +146,7 @@ async function loadData() {
 
     state.isLoading = false;
   } catch (err) {
-    console.error('Failed to load data:', err);
+    console.error('[YR365] Failed to load data:', err);
     loadingStatus.textContent = 'Error loading data. Retrying...';
     setTimeout(loadData, 5000);
   }
