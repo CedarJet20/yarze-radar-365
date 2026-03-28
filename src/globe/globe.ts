@@ -194,6 +194,22 @@ interface VehicleDatum {
   selected: boolean;
 }
 
+// Globe radius constant (matches three-globe internal value)
+const GLOBE_RADIUS = 100;
+
+// Convert lat/lng/alt to 3D position on the globe
+function polar2Cartesian(lat: number, lng: number, relAltitude: number) {
+  const phi = (90 - lat) * Math.PI / 180;
+  const theta = (90 - lng) * Math.PI / 180;
+  const r = GLOBE_RADIUS * (1 + relAltitude);
+  const sinPhi = Math.sin(phi);
+  return {
+    x: r * sinPhi * Math.cos(theta),
+    y: r * Math.cos(phi),
+    z: r * sinPhi * Math.sin(theta),
+  };
+}
+
 // ============================================================
 // Globe creation
 // ============================================================
@@ -237,11 +253,20 @@ export function createGlobe(
       const sprite = new THREE.Sprite(material);
       const scale = datum.selected ? 5.0 : 3.5;
       sprite.scale.set(scale, scale, 1);
+
+      // Position the sprite on the globe
+      const pos = polar2Cartesian(datum.lat, datum.lng, datum.alt);
+      sprite.position.set(pos.x, pos.y, pos.z);
+
       return sprite;
     })
     .customThreeObjectUpdate((obj: any, d: any) => {
       const datum = d as VehicleDatum;
       const sprite = obj as THREE.Sprite;
+
+      // Update position
+      const pos = polar2Cartesian(datum.lat, datum.lng, datum.alt);
+      sprite.position.set(pos.x, pos.y, pos.z);
 
       // Always regenerate texture on update (heading/selection may have changed)
       const texture = createRotatedTexture(
