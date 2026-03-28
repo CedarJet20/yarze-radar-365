@@ -142,7 +142,7 @@ async function loadData() {
   }
 }
 
-// --- Auto-refresh every 15 seconds ---
+// --- Auto-refresh every 60 seconds (conserve API quota) ---
 setInterval(async () => {
   if (state.isLoading) return;
 
@@ -195,4 +195,4 @@ setInterval(async () => {
   } catch (err) {
     console.warn('Refresh failed:', err);
   }
-}, 30000);
+}, 60000);
