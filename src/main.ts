@@ -31,7 +31,9 @@ const state: AppState = {
 // --- DOM Setup ---
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div id="globe-container"></div>
-  <div id="ui-overlay"></div>
+  <div id="ui-overlay">
+    <div id="right-panel-column"></div>
+  </div>
   <div id="loading-screen" class="loading-screen">
     <div class="loading-content">
       <div class="loading-globe"></div>
@@ -44,24 +46,25 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 `;
 
 const globeContainer = document.getElementById('globe-container')!;
-const uiOverlay = document.getElementById('ui-overlay')!;
+const rightColumn = document.getElementById('right-panel-column')!;
 const loadingScreen = document.getElementById('loading-screen')!;
 const loadingStatus = document.getElementById('loading-status')!;
 
 // --- Initialize Globe ---
-const { updateVehicles, showTrajectory, flyTo } = createGlobe(
+const { updateVehicles, showTrajectory, flyTo, setSelectedVehicle } = createGlobe(
   globeContainer,
   onVehicleClick,
   onGlobeReady
 );
 
-// --- Initialize UI ---
-const infoPanel = createInfoPanel(uiOverlay, () => {
+// --- Initialize UI (both panels go into the right column) ---
+const controls = createControls(rightColumn, state.filters, onFiltersChanged);
+
+const infoPanel = createInfoPanel(rightColumn, () => {
   state.selectedVehicle = null;
+  setSelectedVehicle(null);
   showTrajectory(null);
 });
-
-const controls = createControls(uiOverlay, state.filters, onFiltersChanged);
 
 // --- Event Handlers ---
 
@@ -73,6 +76,8 @@ function onGlobeReady() {
 
 function onVehicleClick(vehicle: Vehicle) {
   state.selectedVehicle = vehicle;
+  const id = vehicle.type === 'aircraft' ? vehicle.icao24 : vehicle.mmsi;
+  setSelectedVehicle(id);
   infoPanel.show(vehicle);
   showTrajectory(vehicle);
   flyTo(vehicle.latitude, vehicle.longitude);

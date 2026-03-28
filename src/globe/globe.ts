@@ -1,6 +1,6 @@
 // ============================================================
 // Globe Renderer — globe.gl + Three.js
-// Uses customLayerData with rotated meshes for heading-aware icons
+// Uses customLayerData with rotated textures for heading-aware icons
 // ============================================================
 
 import Globe from 'globe.gl';
@@ -56,7 +56,8 @@ function getVehicleId(v: Vehicle): string {
 function createRotatedTexture(
   type: 'aircraft' | 'vessel',
   color: string,
-  headingDeg: number
+  headingDeg: number,
+  selected: boolean
 ): THREE.CanvasTexture {
   const size = 128;
   const canvas = document.createElement('canvas');
@@ -66,8 +67,27 @@ function createRotatedTexture(
 
   ctx.clearRect(0, 0, size, size);
 
+  // Draw selection ring BEFORE rotating (so it stays circular)
+  if (selected) {
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#ffffff';
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size * 0.4, 0, Math.PI * 2);
+    ctx.stroke();
+    // Second ring for pulsing glow effect
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size * 0.43, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
   // Rotate the canvas to bake heading into the texture
-  // Icons are drawn pointing UP (north = 0°), heading is clockwise from north
   ctx.save();
   ctx.translate(size / 2, size / 2);
   ctx.rotate((headingDeg * Math.PI) / 180);
@@ -81,7 +101,6 @@ function createRotatedTexture(
 
   ctx.restore();
 
-  // Draw label area (not rotated) — small dot at center bottom for reference
   const tex = new THREE.CanvasTexture(canvas);
   tex.needsUpdate = true;
   return tex;
@@ -92,23 +111,20 @@ function drawAircraftIcon(ctx: CanvasRenderingContext2D, size: number, color: st
   const cy = size / 2;
   const s = size * 0.35;
 
-  // Glow
   ctx.shadowColor = color;
   ctx.shadowBlur = 12;
 
   ctx.fillStyle = color;
   ctx.beginPath();
-  // Aircraft silhouette pointing UP (nose at top)
-  ctx.moveTo(cx, cy - s);                     // nose
-  ctx.lineTo(cx + s * 0.12, cy - s * 0.6);    // right fuselage
-  ctx.lineTo(cx + s * 0.8, cy + s * 0.1);     // right wing tip
-  ctx.lineTo(cx + s * 0.75, cy + s * 0.22);   // right wing trailing edge
-  ctx.lineTo(cx + s * 0.12, cy + s * 0.05);   // right wing root
-  ctx.lineTo(cx + s * 0.12, cy + s * 0.5);    // right fuselage aft
-  ctx.lineTo(cx + s * 0.4, cy + s * 0.72);    // right stabilizer tip
-  ctx.lineTo(cx + s * 0.35, cy + s * 0.82);   // right stabilizer trailing
-  ctx.lineTo(cx, cy + s * 0.65);              // tail center
-  // Mirror left side
+  ctx.moveTo(cx, cy - s);
+  ctx.lineTo(cx + s * 0.12, cy - s * 0.6);
+  ctx.lineTo(cx + s * 0.8, cy + s * 0.1);
+  ctx.lineTo(cx + s * 0.75, cy + s * 0.22);
+  ctx.lineTo(cx + s * 0.12, cy + s * 0.05);
+  ctx.lineTo(cx + s * 0.12, cy + s * 0.5);
+  ctx.lineTo(cx + s * 0.4, cy + s * 0.72);
+  ctx.lineTo(cx + s * 0.35, cy + s * 0.82);
+  ctx.lineTo(cx, cy + s * 0.65);
   ctx.lineTo(cx - s * 0.35, cy + s * 0.82);
   ctx.lineTo(cx - s * 0.4, cy + s * 0.72);
   ctx.lineTo(cx - s * 0.12, cy + s * 0.5);
@@ -119,21 +135,17 @@ function drawAircraftIcon(ctx: CanvasRenderingContext2D, size: number, color: st
   ctx.closePath();
   ctx.fill();
 
-  // Engine nacelles for larger aircraft
   ctx.shadowBlur = 0;
   ctx.fillStyle = color;
   ctx.globalAlpha = 0.7;
-  // Left engine
   ctx.beginPath();
   ctx.ellipse(cx - s * 0.38, cy + s * 0.08, s * 0.06, s * 0.14, 0, 0, Math.PI * 2);
   ctx.fill();
-  // Right engine
   ctx.beginPath();
   ctx.ellipse(cx + s * 0.38, cy + s * 0.08, s * 0.06, s * 0.14, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = 1;
 
-  // Cockpit highlight
   ctx.fillStyle = 'rgba(255,255,255,0.35)';
   ctx.beginPath();
   ctx.ellipse(cx, cy - s * 0.78, s * 0.07, s * 0.12, 0, 0, Math.PI * 2);
@@ -145,25 +157,22 @@ function drawVesselIcon(ctx: CanvasRenderingContext2D, size: number, color: stri
   const cy = size / 2;
   const s = size * 0.32;
 
-  // Glow
   ctx.shadowColor = color;
   ctx.shadowBlur = 10;
 
   ctx.fillStyle = color;
   ctx.beginPath();
-  // Ship hull pointing UP (bow at top)
-  ctx.moveTo(cx, cy - s);                      // bow point
-  ctx.lineTo(cx + s * 0.35, cy - s * 0.4);     // right bow
-  ctx.lineTo(cx + s * 0.35, cy + s * 0.5);     // right hull
-  ctx.lineTo(cx + s * 0.25, cy + s * 0.75);    // right stern
-  ctx.lineTo(cx, cy + s * 0.85);               // stern center
-  ctx.lineTo(cx - s * 0.25, cy + s * 0.75);    // left stern
-  ctx.lineTo(cx - s * 0.35, cy + s * 0.5);     // left hull
-  ctx.lineTo(cx - s * 0.35, cy - s * 0.4);     // left bow
+  ctx.moveTo(cx, cy - s);
+  ctx.lineTo(cx + s * 0.35, cy - s * 0.4);
+  ctx.lineTo(cx + s * 0.35, cy + s * 0.5);
+  ctx.lineTo(cx + s * 0.25, cy + s * 0.75);
+  ctx.lineTo(cx, cy + s * 0.85);
+  ctx.lineTo(cx - s * 0.25, cy + s * 0.75);
+  ctx.lineTo(cx - s * 0.35, cy + s * 0.5);
+  ctx.lineTo(cx - s * 0.35, cy - s * 0.4);
   ctx.closePath();
   ctx.fill();
 
-  // Bridge
   ctx.shadowBlur = 0;
   ctx.fillStyle = 'rgba(255,255,255,0.25)';
   ctx.fillRect(cx - s * 0.15, cy + s * 0.15, s * 0.3, s * 0.25);
@@ -182,27 +191,15 @@ interface VehicleDatum {
   color: string;
   heading: number;
   label: string;
-}
-
-// Globe radius used by globe.gl
-const GLOBE_RADIUS = 100;
-const DEG2RAD = Math.PI / 180;
-
-// Convert lat/lng/alt to 3D cartesian coordinates on the globe
-function latLngToVector3(lat: number, lng: number, alt: number): THREE.Vector3 {
-  const phi = (90 - lat) * DEG2RAD;
-  const theta = (90 + lng) * DEG2RAD;
-  const r = GLOBE_RADIUS * (1 + alt);
-  return new THREE.Vector3(
-    r * Math.sin(phi) * Math.cos(theta),
-    r * Math.cos(phi),
-    r * Math.sin(phi) * Math.sin(theta)
-  );
+  selected: boolean;
 }
 
 // ============================================================
 // Globe creation
 // ============================================================
+
+// Track currently selected vehicle ID for highlight rendering
+let selectedVehicleId: string | null = null;
 
 export function createGlobe(
   container: HTMLElement,
@@ -213,6 +210,7 @@ export function createGlobe(
   updateVehicles: (vehicles: Vehicle[], filters: FilterState) => void;
   showTrajectory: (vehicle: Vehicle | null) => void;
   flyTo: (lat: number, lng: number) => void;
+  setSelectedVehicle: (id: string | null) => void;
 } {
   const globe = new Globe(container)
     .globeImageUrl('https://unpkg.com/three-globe@2.35.1/example/img/earth-blue-marble.jpg')
@@ -221,14 +219,15 @@ export function createGlobe(
     .showAtmosphere(true)
     .atmosphereColor('#4da6ff')
     .atmosphereAltitude(0.2)
-    // Custom layer for vehicle meshes (WebGL-native, supports rotation)
+    // Custom layer for vehicle sprites
     .customLayerData([])
     .customThreeObject((d: any) => {
       const datum = d as VehicleDatum;
       const texture = createRotatedTexture(
         datum.vehicle.type,
         datum.color,
-        datum.heading
+        datum.heading,
+        datum.selected
       );
       const material = new THREE.SpriteMaterial({
         map: texture,
@@ -236,30 +235,28 @@ export function createGlobe(
         depthWrite: false,
       });
       const sprite = new THREE.Sprite(material);
-      sprite.scale.set(3.5, 3.5, 1);
-      sprite.userData = datum;
+      const scale = datum.selected ? 5.0 : 3.5;
+      sprite.scale.set(scale, scale, 1);
       return sprite;
     })
     .customThreeObjectUpdate((obj: any, d: any) => {
       const datum = d as VehicleDatum;
       const sprite = obj as THREE.Sprite;
 
-      // Update position
-      const pos = latLngToVector3(datum.lat, datum.lng, datum.alt);
-      sprite.position.set(pos.x, pos.y, pos.z);
+      // Always regenerate texture on update (heading/selection may have changed)
+      const texture = createRotatedTexture(
+        datum.vehicle.type,
+        datum.color,
+        datum.heading,
+        datum.selected
+      );
+      const mat = sprite.material as THREE.SpriteMaterial;
+      if (mat.map) mat.map.dispose();
+      mat.map = texture;
+      mat.needsUpdate = true;
 
-      // Re-create texture if heading changed
-      const oldDatum = sprite.userData as VehicleDatum;
-      if (Math.abs(oldDatum.heading - datum.heading) > 1 || oldDatum.color !== datum.color) {
-        const texture = createRotatedTexture(
-          datum.vehicle.type,
-          datum.color,
-          datum.heading
-        );
-        (sprite.material as THREE.SpriteMaterial).map = texture;
-        (sprite.material as THREE.SpriteMaterial).needsUpdate = true;
-      }
-      sprite.userData = datum;
+      const scale = datum.selected ? 5.0 : 3.5;
+      sprite.scale.set(scale, scale, 1);
     })
     .customLayerLabel((d: any) => {
       const datum = d as VehicleDatum;
@@ -300,10 +297,10 @@ export function createGlobe(
     .arcDashGap(0.2)
     .arcDashAnimateTime(2000);
 
-  // Click handler for custom layer objects
+  // Click handler — globe.gl passes the datum object directly
   globe.onCustomLayerClick((obj: any) => {
     const datum = obj as VehicleDatum;
-    if (datum.vehicle) {
+    if (datum && datum.vehicle) {
       onVehicleClick(datum.vehicle);
     }
   });
@@ -336,6 +333,9 @@ export function createGlobe(
 
   setTimeout(onGlobeReady, 1500);
 
+  // --- State ---
+  let lastData: VehicleDatum[] = [];
+
   // --- Update methods ---
 
   function updateVehicles(vehicles: Vehicle[], filters: FilterState) {
@@ -361,18 +361,34 @@ export function createGlobe(
       return true;
     });
 
-    const data: VehicleDatum[] = filtered.map(v => ({
-      id: getVehicleId(v),
-      lat: v.latitude,
-      lng: v.longitude,
-      alt: getVehicleAlt(v),
-      vehicle: v,
-      color: getVehicleColor(v),
-      heading: v.heading,
-      label: getVehicleLabel(v),
-    }));
+    lastData = filtered.map(v => {
+      const id = getVehicleId(v);
+      return {
+        id,
+        lat: v.latitude,
+        lng: v.longitude,
+        alt: getVehicleAlt(v),
+        vehicle: v,
+        color: getVehicleColor(v),
+        heading: v.heading,
+        label: getVehicleLabel(v),
+        selected: id === selectedVehicleId,
+      };
+    });
 
-    globe.customLayerData(data);
+    globe.customLayerData(lastData);
+  }
+
+  function setSelectedVehicle(id: string | null) {
+    selectedVehicleId = id;
+    // Re-render with updated selection state
+    if (lastData.length > 0) {
+      lastData = lastData.map(d => ({
+        ...d,
+        selected: d.id === selectedVehicleId,
+      }));
+      globe.customLayerData(lastData);
+    }
   }
 
   function showTrajectory(vehicle: Vehicle | null) {
@@ -405,5 +421,5 @@ export function createGlobe(
     globe.pointOfView({ lat, lng, altitude: 1.0 }, 1000);
   }
 
-  return { globe, updateVehicles, showTrajectory, flyTo };
+  return { globe, updateVehicles, showTrajectory, flyTo, setSelectedVehicle };
 }

@@ -70,6 +70,32 @@ html, body {
   pointer-events: auto;
 }
 
+/* ---- Right Panel Column (filters + details stacked) ---- */
+#right-panel-column {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 320px;
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
+  pointer-events: auto;
+}
+
+#right-panel-column::-webkit-scrollbar {
+  width: 4px;
+}
+
+#right-panel-column::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 4px;
+}
+
 /* ---- Loading Screen ---- */
 .loading-screen {
   position: fixed;
@@ -151,32 +177,19 @@ html, body {
   color: var(--text-muted);
 }
 
-/* ---- Controls Panel (Right Side) ---- */
+/* ---- Controls Panel (stacked in right column) ---- */
 .controls {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 300px;
+  width: 100%;
+  flex-shrink: 0;
   background: rgba(15, 21, 32, 0.92);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  max-height: calc(100vh - 32px);
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-light) transparent;
 }
 
-.controls::-webkit-scrollbar {
-  width: 4px;
-}
-
-.controls::-webkit-scrollbar-thumb {
-  background: var(--border-light);
-  border-radius: 4px;
-}
+/* scrollbar handled by #right-panel-column */
 
 .controls-header {
   padding: 16px 20px;
@@ -503,37 +516,29 @@ html, body {
   line-height: 1.6;
 }
 
-/* ---- Info Panel (Left Side) ---- */
+/* ---- Info Panel (stacked below controls in right column) ---- */
 .info-panel {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  width: 360px;
-  max-height: calc(100vh - 32px);
+  width: 100%;
+  flex-shrink: 0;
   background: rgba(15, 21, 32, 0.95);
   backdrop-filter: blur(16px);
   border: 1px solid var(--border);
   border-radius: 12px;
-  overflow-y: auto;
+  overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-light) transparent;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
 }
 
-.info-panel::-webkit-scrollbar {
-  width: 4px;
-}
-
-.info-panel::-webkit-scrollbar-thumb {
-  background: var(--border-light);
-  border-radius: 4px;
-}
+/* scrollbar handled by #right-panel-column */
 
 .info-panel.hidden {
-  transform: translateX(-20px);
+  max-height: 0;
   opacity: 0;
   pointer-events: none;
+  overflow: hidden;
+  border: none;
+  margin: 0;
+  padding: 0;
 }
 
 .panel-header {
@@ -808,30 +813,23 @@ html, body {
 
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
-  .controls {
+  #right-panel-column {
     top: auto;
     bottom: 0;
     left: 0;
     right: 0;
     width: 100%;
-    max-height: 45vh;
+    max-height: 50vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .controls {
     border-radius: 16px 16px 0 0;
     border-bottom: none;
   }
 
   .info-panel {
-    top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    max-height: 60vh;
-    border-radius: 16px 16px 0 0;
-    border-bottom: none;
-  }
-
-  .info-panel.hidden {
-    transform: translateY(100%);
+    border-radius: 0;
   }
 }
 
