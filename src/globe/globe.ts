@@ -7,6 +7,7 @@ import Globe from 'globe.gl';
 import type { GlobeInstance } from 'globe.gl';
 import * as THREE from 'three';
 import type { Vehicle, FilterState } from '../types';
+import { AIRPORTS } from '../data/airports';
 
 // Colors by vehicle type
 const AIRCRAFT_COLORS: Record<string, string> = {
@@ -251,7 +252,7 @@ export function createGlobe(
         depthWrite: false,
       });
       const sprite = new THREE.Sprite(material);
-      const scale = datum.selected ? 5.0 : 3.5;
+      const scale = datum.selected ? 3.0 : 1.8;
       sprite.scale.set(scale, scale, 1);
 
       // Position the sprite on the globe
@@ -280,7 +281,7 @@ export function createGlobe(
       mat.map = texture;
       mat.needsUpdate = true;
 
-      const scale = datum.selected ? 5.0 : 3.5;
+      const scale = datum.selected ? 3.0 : 1.8;
       sprite.scale.set(scale, scale, 1);
     })
     .customLayerLabel((d: any) => {
@@ -299,6 +300,25 @@ export function createGlobe(
         ${v.speed.toFixed(1)} kts &rarr; ${v.destination}
       </div>`;
     })
+    // Airport labels layer
+    .labelsData(Object.values(AIRPORTS).map(a => ({
+      lat: a.lat,
+      lng: a.lng,
+      text: a.iata,
+      size: 0.4,
+      color: 'rgba(255, 200, 50, 0.85)',
+      airport: a,
+    })))
+    .labelLat((d: any) => d.lat)
+    .labelLng((d: any) => d.lng)
+    .labelText((d: any) => d.text)
+    .labelSize((d: any) => d.size)
+    .labelColor((d: any) => d.color)
+    .labelDotRadius(0.3)
+    .labelDotOrientation(() => 'bottom' as const)
+    .labelAltitude(0.001)
+    .labelResolution(2)
+    .labelLabel((d: any) => `<div class="globe-tooltip"><b>${d.airport.iata}</b> — ${d.airport.name}<br/>${d.airport.city}, ${d.airport.country}</div>`)
     // Paths layer for trajectories
     .pathsData([])
     .pathPoints('coords')

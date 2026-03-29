@@ -84,6 +84,22 @@ const FETCH_ZONES: [number, number, number, number][] = [
 // Classification logic
 // ============================================================
 
+function haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function calcFlightProgress(lat: number, lng: number, dep: { lat: number; lng: number }, arr: { lat: number; lng: number }): number {
+  const totalDist = haversine(dep.lat, dep.lng, arr.lat, arr.lng);
+  if (totalDist < 10) return 1;
+  const fromDep = haversine(dep.lat, dep.lng, lat, lng);
+  return Math.min(1, Math.max(0, fromDep / totalDist));
+}
+
 function classifyFromTypeCode(
   typeCode: string,
   callsign: string,
@@ -174,6 +190,11 @@ function parseFRaircraft(ac: (string | number | null)[]): Aircraft | null {
   const departureAirport = originIATA ? findAirportByIATA(originIATA) : null;
   const arrivalAirport = destIATA ? findAirportByIATA(destIATA) : null;
 
+  let progress = 0;
+  if (departureAirport && arrivalAirport) {
+    progress = calcFlightProgress(lat, lng, departureAirport, arrivalAirport);
+  }
+
   return {
     type: 'aircraft',
     icao24: hex || `fr_${ac[0]}`,
@@ -205,7 +226,7 @@ function parseFRaircraft(ac: (string | number | null)[]): Aircraft | null {
     arrivalAirport,
     departureTime: null,
     etaTime: null,
-    progress: 0,
+    progress,
   };
 }
 
