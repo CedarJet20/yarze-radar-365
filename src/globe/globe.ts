@@ -217,6 +217,7 @@ function polar2Cartesian(lat: number, lng: number, relAltitude: number) {
 
 // Track currently selected vehicle ID for highlight rendering
 let selectedVehicleId: string | null = null;
+let currentZoomScale = 1;
 
 export function createGlobe(
   container: HTMLElement,
@@ -252,7 +253,9 @@ export function createGlobe(
         depthWrite: false,
       });
       const sprite = new THREE.Sprite(material);
-      const scale = datum.selected ? 3.0 : 1.8;
+      const baseScale = datum.selected ? 3.0 : 1.8;
+      sprite.userData.baseScale = baseScale;
+      const scale = baseScale * currentZoomScale;
       sprite.scale.set(scale, scale, 1);
 
       // Position the sprite on the globe
@@ -281,7 +284,9 @@ export function createGlobe(
       mat.map = texture;
       mat.needsUpdate = true;
 
-      const scale = datum.selected ? 3.0 : 1.8;
+      const baseScale = datum.selected ? 3.0 : 1.8;
+      sprite.userData.baseScale = baseScale;
+      const scale = baseScale * currentZoomScale;
       sprite.scale.set(scale, scale, 1);
     })
     .customLayerLabel((d: any) => {
@@ -336,11 +341,13 @@ export function createGlobe(
     .arcStartLng((d: any) => d.startLng)
     .arcEndLat((d: any) => d.endLat)
     .arcEndLng((d: any) => d.endLng)
-    .arcColor(() => ['rgba(255,255,0,0.6)', 'rgba(255,255,0,0.1)'])
-    .arcStroke(1)
-    .arcDashLength(0.4)
-    .arcDashGap(0.2)
-    .arcDashAnimateTime(2000);
+    .arcColor((d: any) => d.isRemaining
+      ? ['rgba(255,220,0,0.5)', 'rgba(255,220,0,0.3)']
+      : ['rgba(0,212,255,0.6)', 'rgba(0,212,255,0.1)'])
+    .arcStroke((d: any) => d.isRemaining ? 0.4 : 0.8)
+    .arcDashLength((d: any) => d.isRemaining ? 0.8 : 0.4)
+    .arcDashGap((d: any) => d.isRemaining ? 0.15 : 0.2)
+    .arcDashAnimateTime((d: any) => d.isRemaining ? 4000 : 2000);
 
   // Click handler — globe.gl passes the datum object directly
   globe.onCustomLayerClick((obj: any) => {
@@ -354,12 +361,42 @@ export function createGlobe(
   const scene = globe.scene();
   scene.add(new THREE.AmbientLight(0xcccccc, 1.2));
 
+  // Improve rendering quality
+  const renderer = globe.renderer() as THREE.WebGLRenderer;
+  renderer.setPixelRatio(window.devicePixelRatio);
+
+  // Improve texture quality with anisotropic filtering
+  const improveTexture = setInterval(() => {
+    const mat = globe.globeMaterial() as THREE.MeshPhongMaterial;
+    if (mat.map && mat.map.image) {
+      mat.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      mat.map.needsUpdate = true;
+      clearInterval(improveTexture);
+    }
+  }, 500);
+
   // Auto-rotate slowly
   const controls = globe.controls() as any;
   controls.autoRotate = true;
   controls.autoRotateSpeed = 0.3;
   controls.enableDamping = true;
   controls.dampingFactor = 0.1;
+
+  // Scale icons proportionally on zoom
+  const camera = globe.camera();
+  controls.addEventListener('change', () => {
+    const dist = camera.position.length();
+    const newScale = Math.max(0.3, Math.min(1.5, dist / 350));
+    if (Math.abs(newScale - currentZoomScale) > 0.02) {
+      currentZoomScale = newScale;
+      scene.traverse((obj: any) => {
+        if (obj.isSprite && obj.userData.baseScale) {
+          const s = obj.userData.baseScale * currentZoomScale;
+          obj.scale.set(s, s, 1);
+        }
+      });
+    }
+  });
 
   // Stop auto-rotate on user interaction
   container.addEventListener('mousedown', () => { controls.autoRotate = false; });
@@ -437,29 +474,43 @@ export function createGlobe(
   }
 
   function showTrajectory(vehicle: Vehicle | null) {
-    if (!vehicle || vehicle.trajectory.length === 0) {
+    if (!vehicle) {
       globe.pathsData([]);
       globe.arcsData([]);
       return;
     }
 
-    const pathCoords = vehicle.trajectory.map(p => [p.lat, p.lng, 0.001]);
-    pathCoords.push([vehicle.latitude, vehicle.longitude, getVehicleAlt(vehicle)]);
+    // Past trajectory path
+    if (vehicle.trajectory.length > 0) {
+      const pathCoords = vehicle.trajectory.map(p => [p.lat, p.lng, 0.001]);
+      pathCoords.push([vehicle.latitude, vehicle.longitude, getVehicleAlt(vehicle)]);
+      globe.pathsData([{ coords: pathCoords }]);
+    } else {
+      globe.pathsData([]);
+    }
 
-    globe.pathsData([{ coords: pathCoords }]);
+    const arcs: any[] = [];
 
-    // Future heading prediction
+    // Heading prediction (short cyan arc)
     const headingRad = (vehicle.heading * Math.PI) / 180;
     const distance = vehicle.type === 'aircraft' ? 3 : 1.5;
     const endLat = vehicle.latitude + Math.cos(headingRad) * distance;
     const endLng = vehicle.longitude + Math.sin(headingRad) * distance;
+    arcs.push({
+      startLat: vehicle.latitude, startLng: vehicle.longitude,
+      endLat, endLng, isRemaining: false,
+    });
 
-    globe.arcsData([{
-      startLat: vehicle.latitude,
-      startLng: vehicle.longitude,
-      endLat,
-      endLng,
-    }]);
+    // Remaining distance to destination (narrow yellow arc)
+    if (vehicle.type === 'aircraft' && vehicle.arrivalAirport) {
+      arcs.push({
+        startLat: vehicle.latitude, startLng: vehicle.longitude,
+        endLat: vehicle.arrivalAirport.lat, endLng: vehicle.arrivalAirport.lng,
+        isRemaining: true,
+      });
+    }
+
+    globe.arcsData(arcs);
   }
 
   function flyTo(lat: number, lng: number) {

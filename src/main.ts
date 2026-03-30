@@ -51,7 +51,7 @@ const loadingScreen = document.getElementById('loading-screen')!;
 const loadingStatus = document.getElementById('loading-status')!;
 
 // --- Initialize Globe ---
-const { updateVehicles, showTrajectory, flyTo, setSelectedVehicle } = createGlobe(
+const { updateVehicles, showTrajectory, setSelectedVehicle } = createGlobe(
   globeContainer,
   onVehicleClick,
   onGlobeReady
@@ -90,7 +90,6 @@ function onVehicleClick(vehicle: Vehicle) {
   setSelectedVehicle(id);
   infoPanel.show(vehicle);
   showTrajectory(vehicle);
-  flyTo(vehicle.latitude, vehicle.longitude);
 
   // Try to fetch detailed trajectory for aircraft
   if (vehicle.type === 'aircraft' && vehicle.trajectory.length === 0) {
